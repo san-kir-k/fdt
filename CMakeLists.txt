@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.20)
 
 project (fdt)
 
@@ -13,9 +13,24 @@ else ()
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -O3 -Wall -Wextra -Werror")
 endif ()
 
-add_executable (naive
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+macro (prepare_exec TARGET SOURCE)
+    add_executable (${TARGET}
+        ${SOURCE}
+    )
+
+    target_include_directories (${TARGET} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/include
+    )
+endmacro ()
+
+prepare_exec (memset
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memset.cpp
 )
-target_include_directories (naive PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+prepare_exec (memcpy_fixed
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memcpy_fixed_structs.cpp
+)
+
+prepare_exec (memcpy
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memcpy.cpp
 )

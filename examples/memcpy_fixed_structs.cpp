@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cstdint>
 #include <cstring>
-#include <chrono>
 #include <cassert>
+
+#include "utility.h"
 
 // -------------------------------------------------------------------------
 
@@ -36,6 +37,7 @@ inline void SetAoS(AoS* dst, uint64_t size, unsigned char c)
 
 // -------------------------------------------------------------------------
 
+// функция для проверки того, что при конвертации значения не испортились
 bool ValidateEq(const AoS* aos, const SoA& soa, uint64_t size)
 {
     for (uint64_t i = 0; i < size; ++i)
@@ -50,39 +52,7 @@ bool ValidateEq(const AoS* aos, const SoA& soa, uint64_t size)
 
 // -------------------------------------------------------------------------
 
-void BestPossibleAoSToSoA(const AoS*, SoA& dst, uint64_t size, unsigned char c)
-{
-    memset(dst.x, c, size * sizeof(uint64_t));
-    memset(dst.y, c, size * sizeof(uint64_t));
-    memset(dst.z, c, size * sizeof(uint64_t));
-}
-
-void BestPossibleSoAToAoS(const SoA&, AoS* dst, uint64_t size, unsigned char c)
-{
-    memset(dst, c, size * sizeof(AoS));
-}
-
-void BestPossible(SoA& soa, AoS* aos, uint64_t size)
-{
-    SetAoS(aos, size, 2);
-    auto start_time = std::chrono::high_resolution_clock::now();
-    BestPossibleAoSToSoA(aos, soa, size, 2);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    std::cout << "BestPossible AoS to SoA transformation: " << time.count() << " [microsec]" << std::endl;
-    assert(ValidateEq(aos, soa, size));
-
-    SetSoA(soa, size, 3);
-    start_time = std::chrono::high_resolution_clock::now();
-    BestPossibleSoAToAoS(soa, aos, size, 3);
-    end_time = std::chrono::high_resolution_clock::now();
-    time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    std::cout << "BestPossible SoA to AoS transformation: " << time.count() << " [microsec]" << std::endl;
-    assert(ValidateEq(aos, soa, size));
-}
-
-// -------------------------------------------------------------------------
-
+// конвертация через memcpy
 void NaiveAoSToSoA(const AoS* src, SoA& dst, uint64_t size)
 {
     for (uint64_t i = 0; i < size; ++i)
@@ -103,24 +73,20 @@ void NaiveSoAToAoS(const SoA& src, AoS* dst, uint64_t size)
     }
 }
 
+// -------------------------------------------------------------------------
+
 void Naive(SoA& soa, AoS* aos, uint64_t size)
 {
     SetAoS(aos, size, 2);
-    auto start_time = std::chrono::high_resolution_clock::now();
-    NaiveAoSToSoA(aos, soa, size);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    std::cout << "Naive AoS to SoA transformation: " << time.count() << " [microsec]" << std::endl;
+    BENCHMARK("Naive AoS to SoA transformation: ", NaiveAoSToSoA, aos, soa, size);
     assert(ValidateEq(aos, soa, size));
 
     SetSoA(soa, size, 3);
-    start_time = std::chrono::high_resolution_clock::now();
-    NaiveSoAToAoS(soa, aos, size);
-    end_time = std::chrono::high_resolution_clock::now();
-    time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    std::cout << "Naive SoA to AoS transformation: " << time.count() << " [microsec]" << std::endl;
+    BENCHMARK("Naive SoA to AoS transformation: ", NaiveSoAToAoS, soa, aos, size);
     assert(ValidateEq(aos, soa, size));
 }
+
+// -------------------------------------------------------------------------
 
 int main()
 {
@@ -133,7 +99,6 @@ int main()
     soa.y = new uint64_t[size]{};
     soa.z = new uint64_t[size]{};
 
-    BestPossible(soa, aos, size);
     Naive(soa, aos, size);
 
     delete[] aos;
