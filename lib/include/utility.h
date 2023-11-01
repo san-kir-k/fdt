@@ -3,12 +3,17 @@
 #include <chrono>
 #include <iostream>
 
-#define BENCHMARK(msg, function, args...)                                                                       \
+#define BENCHMARK(msg, bytes, function, args...)                                                                \
     do                                                                                                          \
     {                                                                                                           \
+        using namespace std::chrono_literals;                                                                   \
+        using duration = std::chrono::duration<double>;                                                         \
+        constexpr auto GB = 1'000'000'000l;                                                                     \
         auto start_time = std::chrono::high_resolution_clock::now();                                            \
         function(args);                                                                                         \
         auto end_time = std::chrono::high_resolution_clock::now();                                              \
-        auto time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);               \
-        std::cerr << msg << time.count() << " [microsec]" << std::endl;                                         \
+        duration time = end_time - start_time;                                                                  \
+        std::cerr << msg                                                                                        \
+                  << static_cast<double>(bytes) / (GB * time.count()) << " [GB/sec]"                            \
+                  << std::endl;                                                                                 \
     } while (0)

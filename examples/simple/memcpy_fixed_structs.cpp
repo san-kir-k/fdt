@@ -78,11 +78,11 @@ void NaiveSoAToAoS(const SoA& src, AoS* dst, uint64_t size)
 void Naive(SoA& soa, AoS* aos, uint64_t size)
 {
     SetAoS(aos, size, 2);
-    BENCHMARK("Naive AoS to SoA transformation: ", NaiveAoSToSoA, aos, soa, size);
+    BENCHMARK("[SIMPLE] Naive AoS to SoA transformation: ", size, NaiveAoSToSoA, aos, soa, size);
     assert(ValidateEq(aos, soa, size));
 
     SetSoA(soa, size, 3);
-    BENCHMARK("Naive SoA to AoS transformation: ", NaiveSoAToAoS, soa, aos, size);
+    BENCHMARK("[SIMPLE] Naive SoA to AoS transformation: ", size, NaiveSoAToAoS, soa, aos, size);
     assert(ValidateEq(aos, soa, size));
 }
 

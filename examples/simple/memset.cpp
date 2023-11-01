@@ -70,11 +70,11 @@ void BestPossibleSoAToAoS(const SoA&, AoS* dst, uint64_t size, unsigned char c)
 void BestPossible(SoA& soa, AoS* aos, uint64_t size)
 {
     SetAoS(aos, size, 2);
-    BENCHMARK("BestPossible AoS to SoA transformation: ", BestPossibleAoSToSoA, aos, soa, size, 2);
+    BENCHMARK("[SIMPLE] BestPossible AoS to SoA transformation: ", size, BestPossibleAoSToSoA, aos, soa, size, 2);
     assert(ValidateEq(aos, soa, size));
 
     SetSoA(soa, size, 3);
-    BENCHMARK("BestPossible SoA to AoS transformation: ", BestPossibleSoAToAoS, soa, aos, size, 3);
+    BENCHMARK("[SIMPLE] BestPossible SoA to AoS transformation: ", size, BestPossibleSoAToAoS, soa, aos, size, 3);
     assert(ValidateEq(aos, soa, size));
 }
 

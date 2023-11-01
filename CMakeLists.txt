@@ -24,13 +24,13 @@ macro (prepare_exec TARGET SOURCE)
 endmacro ()
 
 prepare_exec (memset
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memset.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
 )
 
 prepare_exec (memcpy_fixed
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memcpy_fixed_structs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memcpy_fixed_structs.cpp
 )
 
 prepare_exec (memcpy
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/memcpy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memcpy.cpp
 )

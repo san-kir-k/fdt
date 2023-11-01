@@ -60,14 +60,14 @@ void Naive(AoS<PointAttrs_AOS>& aos, SoA<PointAttrs_SOA>& soa)
     aos.SetValues<Point_AOS::z<uint64_t>>(3);
 
     // замер времени в микросекундах
-    BENCHMARK("Naive AoS to SoA transformation: ", aos.ConvertToSoA, soa);
+    BENCHMARK("[SIMPLE] Naive AoS to SoA transformation: ", aos.Size(), aos.ConvertToSoA, soa);
     assert(ValidateEq(aos, soa));
 
     soa.SetValues<Point_SOA::x<uint64_t>>(4);
     soa.SetValues<Point_SOA::y<uint64_t>>(5);
     soa.SetValues<Point_SOA::z<uint64_t>>(6);
 
-    BENCHMARK("Naive SoA to AoS transformation: ", soa.ConvertToAoS, aos);
+    BENCHMARK("[SIMPLE] Naive SoA to AoS transformation: ", soa.Size(), soa.ConvertToAoS, aos);
     assert(ValidateEq(aos, soa));
 }
 
