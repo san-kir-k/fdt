@@ -26,11 +26,3 @@ endmacro ()
 prepare_exec (memset
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
 )
-
-prepare_exec (memcpy_fixed
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memcpy_fixed_structs.cpp
-)
-
-prepare_exec (memcpy
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memcpy.cpp
-)
