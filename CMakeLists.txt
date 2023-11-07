@@ -26,3 +26,6 @@ endmacro ()
 prepare_exec (memset
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
 )
+prepare_exec (naive_raw
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/naive_raw_transpose.cpp
+)
