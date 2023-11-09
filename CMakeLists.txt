@@ -7,6 +7,8 @@ message (STATUS ${CMAKE_CXX_COMPILER})
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(Arrow REQUIRED)
+
 if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -Werror -g -fsanitize=address -fno-omit-frame-pointer")
 else ()
@@ -29,3 +31,13 @@ prepare_exec (memset
 prepare_exec (naive_raw
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/naive_raw_transpose.cpp
 )
+
+prepare_exec (naive_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/naive_arrow.cpp
+)
+
+if(ARROW_LINK_SHARED)
+    target_link_libraries(naive_arrow PRIVATE Arrow::arrow_shared)
+else()
+    target_link_libraries(naive_arrow PRIVATE Arrow::arrow_static)
+endif()
