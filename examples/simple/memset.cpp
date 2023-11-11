@@ -7,7 +7,7 @@
 
 // -------------------------------------------------------------------------
 
-void BestPossible(unsigned char* dst, uint64_t size)
+void BestPossible(uint8_t* dst, uint64_t size)
 {
     BENCHMARK("Memset speed: ", size, std::memset, dst, '1', size);
 }
@@ -18,7 +18,7 @@ int main()
 {
     constexpr uint64_t size = 10'000'000;
 
-    alignas(8) unsigned char* dst = new unsigned char[size]{};
+    alignas(8) uint8_t* dst = new unsigned char[size]{};
 
     BestPossible(dst, size);
 

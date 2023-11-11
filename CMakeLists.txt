@@ -12,7 +12,7 @@ find_package(Arrow REQUIRED)
 if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -Werror -g -fsanitize=address -fno-omit-frame-pointer")
 else ()
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -O3 -Wall -Wextra -Werror")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1 -march=native -O3 -Wall -Wextra -Werror")
 endif ()
 
 macro (prepare_exec TARGET SOURCE)

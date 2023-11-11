@@ -23,28 +23,26 @@ uint64_t GetCTypeSize(std::shared_ptr<arrow::DataType> data)
 
     switch (type_id)
     {
-        case Type::BOOL:
-            return CTypeSize<TypeIdTraits<Type::BOOL>::Type>;
-        case Type::INT8:
-            return CTypeSize<TypeIdTraits<Type::INT8>::Type>;
-        case Type::INT16:
-            return CTypeSize<TypeIdTraits<Type::INT16>::Type>;
-        case Type::INT32:
-            return CTypeSize<TypeIdTraits<Type::INT32>::Type>;
-        case Type::INT64:
-            return CTypeSize<TypeIdTraits<Type::INT64>::Type>;
-        case Type::UINT8:
-            return CTypeSize<TypeIdTraits<Type::UINT8>::Type>;
-        case Type::UINT16:
-            return CTypeSize<TypeIdTraits<Type::UINT16>::Type>;
-        case Type::UINT32:
-            return CTypeSize<TypeIdTraits<Type::UINT32>::Type>;
-        case Type::UINT64:
-            return CTypeSize<TypeIdTraits<Type::UINT64>::Type>;
-        case Type::FLOAT:
-            return CTypeSize<TypeIdTraits<Type::FLOAT>::Type>;
-        case Type::DOUBLE:
-            return CTypeSize<TypeIdTraits<Type::DOUBLE>::Type>;
+        case arrow::Type::INT8:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::INT8>::Type>;
+        case arrow::Type::INT16:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::INT16>::Type>;
+        case arrow::Type::INT32:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::INT32>::Type>;
+        case arrow::Type::INT64:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::INT64>::Type>;
+        case arrow::Type::UINT8:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::UINT8>::Type>;
+        case arrow::Type::UINT16:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::UINT16>::Type>;
+        case arrow::Type::UINT32:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::UINT32>::Type>;
+        case arrow::Type::UINT64:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::UINT64>::Type>;
+        case arrow::Type::FLOAT:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::FLOAT>::Type>;
+        case arrow::Type::DOUBLE:
+            return CTypeSize<arrow::TypeIdTraits<arrow::Type::DOUBLE>::Type>;
         default:
             assert(false);
             break;

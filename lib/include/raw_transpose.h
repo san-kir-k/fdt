@@ -5,11 +5,11 @@
 #include <vector>  // instead of arrow
 #include <algorithm>
 
-void SoA2AoSx4( unsigned char* p1,     uint64_t sz1,
-                unsigned char* p2,     uint64_t sz2,
-                unsigned char* p3,     uint64_t sz3,
-                unsigned char* p4,     uint64_t sz4,
-                unsigned char* out,    uint64_t outsz,
+void SoA2AoSx4( uint8_t* p1,     uint64_t sz1,
+                uint8_t* p2,     uint64_t sz2,
+                uint8_t* p3,     uint64_t sz3,
+                uint8_t* p4,     uint64_t sz4,
+                uint8_t* out,    uint64_t outsz,
                 uint64_t datalen)
 {
     for (uint64_t i = 0; i < datalen; ++i)
@@ -21,10 +21,10 @@ void SoA2AoSx4( unsigned char* p1,     uint64_t sz1,
     }
 }
 
-void SoA2AoSx3( unsigned char* p1,     uint64_t sz1,
-                unsigned char* p2,     uint64_t sz2,
-                unsigned char* p3,     uint64_t sz3,
-                unsigned char* out,    uint64_t outsz,
+void SoA2AoSx3( uint8_t* p1,     uint64_t sz1,
+                uint8_t* p2,     uint64_t sz2,
+                uint8_t* p3,     uint64_t sz3,
+                uint8_t* out,    uint64_t outsz,
                 uint64_t datalen)
 {
     for (uint64_t i = 0; i < datalen; ++i)
@@ -35,9 +35,9 @@ void SoA2AoSx3( unsigned char* p1,     uint64_t sz1,
     }
 }
 
-void SoA2AoSx2( unsigned char* p1,     uint64_t sz1,
-                unsigned char* p2,     uint64_t sz2,
-                unsigned char* out,    uint64_t outsz,
+void SoA2AoSx2( uint8_t* p1,     uint64_t sz1,
+                uint8_t* p2,     uint64_t sz2,
+                uint8_t* out,    uint64_t outsz,
                 uint64_t datalen)
 {
     for (uint64_t i = 0; i < datalen; ++i)
@@ -47,8 +47,8 @@ void SoA2AoSx2( unsigned char* p1,     uint64_t sz1,
     }
 }
 
-void SoA2AoSx1( unsigned char* p1,     uint64_t sz1,
-                unsigned char* out,    uint64_t outsz,
+void SoA2AoSx1( uint8_t* p1,     uint64_t sz1,
+                uint8_t* out,    uint64_t outsz,
                 uint64_t datalen)
 {
     for (uint64_t i = 0; i < datalen; ++i)
@@ -59,13 +59,12 @@ void SoA2AoSx1( unsigned char* p1,     uint64_t sz1,
 
 struct AoSField
 {
-    unsigned char*  ptr;
+    uint8_t*  ptr;
     uint64_t        size;
 };
 
-void SoA2AoS(std::vector<AoSField>& table, unsigned char* out, uint64_t datalen)
+void SoA2AoS(std::vector<AoSField>& table, uint8_t* out, uint64_t datalen)
 {
-    // counting sort?
     std::sort(table.begin(), table.end(), [](const auto& l, const auto& r) -> bool {
         return l.size < r.size;
     });

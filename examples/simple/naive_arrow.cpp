@@ -12,7 +12,7 @@
 
 // -------------------------------------------------------------------------
 
-arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, unsigned char* out)
+arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, uint8_t* out)
 {
     BENCHMARK("Naive arrow speed: ", record->num_rows() * (sizeof(int32_t) * 2 + sizeof(uint8_t) * 3 + sizeof(double)), SoA2AoS, record, out);
     return arrow::Status::OK();
@@ -101,7 +101,7 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
         arrow::field("y", arrow::uint8()),
         arrow::field("z", arrow::uint8()),
         arrow::field("n", arrow::float64())
-    });   
+    });
 
     record = arrow::RecordBatch::Make(schema, size, {array_a, array_b, array_x, array_y, array_z, array_n});
     return arrow::Status::OK();
@@ -112,7 +112,7 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 int main()
 {
     constexpr uint64_t size = 10'000'000;
-    alignas(8) unsigned char* dst = new unsigned char[size * (sizeof(int32_t) * 2 + sizeof(uint8_t) * 3 + sizeof(double))]{};
+    alignas(8) uint8_t* dst = new unsigned char[size * (sizeof(int32_t) * 2 + sizeof(uint8_t) * 3 + sizeof(double))]{};
 
     std::shared_ptr<arrow::RecordBatch> record;
 

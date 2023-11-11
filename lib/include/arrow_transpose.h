@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <bit>
 
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
@@ -12,15 +13,22 @@
 
 #include "pretty_type_traits.h"
 
-void SoA2AoSx4( const unsigned char* p1,
-                const unsigned char* p2,
-                const unsigned char* p3,
-                const unsigned char* p4,
+void SoA2AoSx4( const uint8_t* p1,
+                const uint8_t* p2,
+                const uint8_t* p3,
+                const uint8_t* p4,
                 uint64_t insz,
-                unsigned char* out,
+                uint8_t* out,
                 uint64_t outsz,
                 uint64_t datalen)
 {
+    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
+    goto *gotoTable[std::countr_zero(insz)];
+
+    b8x1:
+    b8x2:
+    b8x4:
+    b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
         std::memcpy(out + outsz * i,          p1 + insz * i, insz);
@@ -30,14 +38,21 @@ void SoA2AoSx4( const unsigned char* p1,
     }
 }
 
-void SoA2AoSx3( const unsigned char* p1,
-                const unsigned char* p2,
-                const unsigned char* p3,
+void SoA2AoSx3( const uint8_t* p1,
+                const uint8_t* p2,
+                const uint8_t* p3,
                 uint64_t insz,
-                unsigned char* out,
+                uint8_t* out,
                 uint64_t outsz,
                 uint64_t datalen)
 {
+    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
+    goto *gotoTable[std::countr_zero(insz)];
+
+    b8x1:
+    b8x2:
+    b8x4:
+    b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
         std::memcpy(out + outsz * i,          p1 + insz * i, insz);
@@ -46,13 +61,20 @@ void SoA2AoSx3( const unsigned char* p1,
     }
 }
 
-void SoA2AoSx2( const unsigned char* p1,
-                const unsigned char* p2,
+void SoA2AoSx2( const uint8_t* p1,
+                const uint8_t* p2,
                 uint64_t insz,
-                unsigned char* out,
+                uint8_t* out,
                 uint64_t outsz,
                 uint64_t datalen)
 {
+    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
+    goto *gotoTable[std::countr_zero(insz)];
+
+    b8x1:
+    b8x2:
+    b8x4:
+    b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
         std::memcpy(out + outsz * i,        p1 + insz * i, insz);
@@ -60,24 +82,30 @@ void SoA2AoSx2( const unsigned char* p1,
     }
 }
 
-void SoA2AoSx1( const unsigned char* p1,
+void SoA2AoSx1( const uint8_t* p1,
                 uint64_t insz,
-                unsigned char* out,
+                uint8_t* out,
                 uint64_t outsz,
                 uint64_t datalen)
 {
+    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
+    goto *gotoTable[std::countr_zero(insz)];
+
+    b8x1:
+    b8x2:
+    b8x4:
+    b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
         std::memcpy(out + outsz * i, p1 + insz * i, insz);
     }
 }
 
-void SoA2AoS(const std::shared_ptr<arrow::RecordBatch>& record_batch, unsigned char* out)
+void SoA2AoS(const std::shared_ptr<arrow::RecordBatch>& record_batch, uint8_t* out)
 {
     uint64_t datalen = record_batch->num_rows();
     auto columns = record_batch->columns();
 
-    // counting sort?
     std::sort(columns.begin(), columns.end(), [](const auto& lhs, const auto& rhs) -> bool {
         return GetCTypeSize(lhs->type()) < GetCTypeSize(rhs->type());
     });
