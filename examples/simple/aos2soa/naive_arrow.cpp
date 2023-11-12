@@ -10,14 +10,14 @@
 #include <format>
 
 #include "aos.h"
-#include "soa2aos.h"
+#include "aos2soa.h"
 #include "utility.h"
 
 // -------------------------------------------------------------------------
 
-arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, AoS& out)
+arrow::Status RunConversion(const AoS& aos, std::shared_ptr<arrow::RecordBatch>& out)
 {
-    BENCHMARK("SoA -> AoS: Naive arrow speed: ", out.GetLength() * out.GetStructSize() , SoA2AoS, record, out);
+    BENCHMARK("AoS -> SoA: Naive arrow speed: ", aos.GetLength() * aos.GetStructSize() , AoS2SoA, aos, out);
     return arrow::Status::OK();
 }
 
@@ -91,7 +91,24 @@ struct SoA
 };
 */
 
-arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& record, uint64_t size)
+arrow::Status FillAoS(AoS& aos)
+{
+    for (uint64_t i = 0; i < aos.GetLength(); ++i)
+    {
+        auto s = aos[i];
+        s.Value<arrow::Int32Type>("a") = 1;
+        s.Value<arrow::Int32Type>("b") = 2;
+        s.Value<arrow::UInt8Type>("x") = 3;
+        s.Value<arrow::UInt8Type>("y") = 4;
+        s.Value<arrow::UInt8Type>("z") = 5;
+        s.Value<arrow::DoubleType>("n") = 42.0;
+    }
+    return arrow::Status::OK();
+}
+
+// -------------------------------------------------------------------------
+
+arrow::Status ResizeRecordBatch(std::shared_ptr<arrow::RecordBatch>& record, uint64_t size)
 {
     arrow::NumericBuilder<arrow::Int32Type> int32_builder;
     ARROW_RETURN_NOT_OK(int32_builder.Resize(size));
@@ -102,42 +119,42 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 
     // a
     std::shared_ptr<arrow::Array> array_a;
-    std::vector<int32_t> values_a(size, 1);
+    std::vector<int32_t> values_a(size);
     ARROW_RETURN_NOT_OK(int32_builder.AppendValues(values_a));
     ARROW_RETURN_NOT_OK(int32_builder.Finish(&array_a));
     int32_builder.Reset();
 
     // b
     std::shared_ptr<arrow::Array> array_b;
-    std::vector<int32_t> values_b(size, 2);
+    std::vector<int32_t> values_b(size);
     ARROW_RETURN_NOT_OK(int32_builder.AppendValues(values_b));
     ARROW_RETURN_NOT_OK(int32_builder.Finish(&array_b));
     int32_builder.Reset();
 
     // x
     std::shared_ptr<arrow::Array> array_x;
-    std::vector<uint8_t> values_x(size, 3);
+    std::vector<uint8_t> values_x(size);
     ARROW_RETURN_NOT_OK(uint8_builder.AppendValues(values_x));
     ARROW_RETURN_NOT_OK(uint8_builder.Finish(&array_x));
     uint8_builder.Reset();
 
     // y
     std::shared_ptr<arrow::Array> array_y;
-    std::vector<uint8_t> values_y(size, 4);
+    std::vector<uint8_t> values_y(size);
     ARROW_RETURN_NOT_OK(uint8_builder.AppendValues(values_y));
     ARROW_RETURN_NOT_OK(uint8_builder.Finish(&array_y));
     uint8_builder.Reset();
 
     // z
     std::shared_ptr<arrow::Array> array_z;
-    std::vector<uint8_t> values_z(size, 5);
+    std::vector<uint8_t> values_z(size);
     ARROW_RETURN_NOT_OK(uint8_builder.AppendValues(values_z));
     ARROW_RETURN_NOT_OK(uint8_builder.Finish(&array_z));
     uint8_builder.Reset();
 
     // n
     std::shared_ptr<arrow::Array> array_n;
-    std::vector<double> values_n(size, 42.0);
+    std::vector<double> values_n(size);
     ARROW_RETURN_NOT_OK(double_builder.AppendValues(values_n));
     ARROW_RETURN_NOT_OK(double_builder.Finish(&array_n));
     double_builder.Reset();
@@ -182,14 +199,21 @@ int main()
 
     std::shared_ptr<arrow::RecordBatch> record;
 
-    auto status = CreateAndFillRecordBatch(record, size);
+    auto status = FillAoS(aos);
     if (!status.ok())
     {
         std::cerr << status.ToString() << std::endl;
         return EXIT_FAILURE;
     }
 
-    status = RunConversion(record, aos);
+    status = ResizeRecordBatch(record, size);
+    if (!status.ok())
+    {
+        std::cerr << status.ToString() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    status = RunConversion(aos, record);
     if (!status.ok())
     {
         std::cerr << status.ToString() << std::endl;

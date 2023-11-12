@@ -29,14 +29,22 @@ private:
 
         template <typename DataType,
                   typename CType = typename arrow::TypeTraits<DataType>::CType>
-        CType Value(const std::string& fieldname) const
+        CType& Value(const std::string& fieldname)
+        {
+            auto offset = m_offsets[m_fieldOffsets.at(fieldname)];
+            return *(reinterpret_cast<CType*>(m_structBuf + offset));
+        }
+
+        template <typename DataType,
+                  typename CType = typename arrow::TypeTraits<DataType>::CType>
+        const CType& Value(const std::string& fieldname) const
         {
             auto offset = m_offsets[m_fieldOffsets.at(fieldname)];
             return *(reinterpret_cast<CType*>(m_structBuf + offset));
         }
 
     private:
-        const FieldOffsets&                  m_fieldOffsets;
+        const FieldOffsets&             m_fieldOffsets;
         uint8_t*                        m_structBuf;
         const std::vector<uint64_t>&    m_offsets;
     };
@@ -72,6 +80,11 @@ public:
         return m_buffer.get();
     }
 
+    const uint8_t* GetBuffer() const
+    {
+        return m_buffer.get();
+    }
+
     uint64_t GetLength() const
     {
         return m_length;
@@ -87,7 +100,12 @@ public:
         return m_fields;
     }
 
-    Struct operator[](uint64_t pos) const
+    Struct operator[](uint64_t pos)
+    {
+        return Struct(m_fieldOffsets, m_buffer.get() + pos * m_offsets.back(), m_offsets);
+    }
+
+    const Struct operator[](uint64_t pos) const
     {
         return Struct(m_fieldOffsets, m_buffer.get() + pos * m_offsets.back(), m_offsets);
     }

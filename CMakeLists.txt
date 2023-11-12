@@ -34,9 +34,14 @@ prepare_exec (soa2aos_naive_raw
 prepare_exec (soa2aos_naive_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/soa2aos/naive_arrow.cpp
 )
+prepare_exec (aos2soa_naive_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/aos2soa/naive_arrow.cpp
+)
 
 if(ARROW_LINK_SHARED)
     target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_shared)
+    target_link_libraries(aos2soa_naive_arrow PRIVATE Arrow::arrow_shared)
 else()
     target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_static)
+    target_link_libraries(aos2soa_naive_arrow PRIVATE Arrow::arrow_static)
 endif()
