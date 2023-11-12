@@ -6,15 +6,74 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <string>
+#include <format>
 
+#include "aos.h"
 #include "arrow_transpose.h"
 #include "utility.h"
 
 // -------------------------------------------------------------------------
 
-arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, uint8_t* out)
+arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, AoS& out)
 {
-    BENCHMARK("Naive arrow speed: ", record->num_rows() * (sizeof(int32_t) * 2 + sizeof(uint8_t) * 3 + sizeof(double)), SoA2AoS, record, out);
+    BENCHMARK("Naive arrow speed: ", out.GetLength() * out.GetStructSize() , SoA2AoS, record, out);
+    return arrow::Status::OK();
+}
+
+// -------------------------------------------------------------------------
+
+template <typename ArrayDataType>
+arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, const AoS& aos, const std::string& fieldname)
+{
+    using DataType = ArrayDataType::TypeClass;
+
+    if (static_cast<uint64_t>(record->num_rows()) != aos.GetLength())
+    {
+        return arrow::Status::RError(std::format("Size must be equal: {} != {}", record->num_rows(), aos.GetLength()));
+    }
+
+    auto lhs = std::static_pointer_cast<ArrayDataType>(record->GetColumnByName(fieldname));
+
+    for (int64_t i = 0; i < record->num_rows(); i++)
+    {
+        auto s = aos[i];
+        if (lhs->Value(i) != s.Value<DataType>(fieldname))
+        {
+            return arrow::Status::RError(std::format("Values must be equal: i = {}, field = {}, {} != {}",
+                                         i, fieldname, lhs->Value(i), s.Value<DataType>(fieldname)));
+        }
+    }
+
+    return arrow::Status::OK();
+}
+
+arrow::Status CheckEquality(const std::shared_ptr<arrow::RecordBatch>& record, const AoS& aos)
+{
+    if (auto status = CheckField<arrow::UInt8Array>(record, aos, "x"); !status.ok())
+    {
+        return status;
+    }
+    if (auto status = CheckField<arrow::UInt8Array>(record, aos, "y"); !status.ok())
+    {
+        return status;
+    }
+    if (auto status = CheckField<arrow::UInt8Array>(record, aos, "z"); !status.ok())
+    {
+        return status;
+    }
+    if (auto status = CheckField<arrow::Int32Array>(record, aos, "a"); !status.ok())
+    {
+        return status;
+    }
+    if (auto status = CheckField<arrow::Int32Array>(record, aos, "b"); !status.ok())
+    {
+        return status;
+    }
+    if (auto status = CheckField<arrow::DoubleArray>(record, aos, "n"); !status.ok())
+    {
+        return status;
+    }
     return arrow::Status::OK();
 }
 
@@ -34,8 +93,6 @@ struct SoA
 
 arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& record, uint64_t size)
 {
-    using arrow::Int64Builder;
-
     arrow::NumericBuilder<arrow::Int32Type> int32_builder;
     ARROW_RETURN_NOT_OK(int32_builder.Resize(size));
     arrow::NumericBuilder<arrow::UInt8Type> uint8_builder;
@@ -86,8 +143,8 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
     double_builder.Reset();
 
     // Cast the arrays to their actual types
-    auto int64_array_a  = std::static_pointer_cast<arrow::Int64Array>(array_a);
-    auto int64_array_b  = std::static_pointer_cast<arrow::Int64Array>(array_b);
+    auto int64_array_a  = std::static_pointer_cast<arrow::Int32Array>(array_a);
+    auto int64_array_b  = std::static_pointer_cast<arrow::Int32Array>(array_b);
     auto uint8t_array_x = std::static_pointer_cast<arrow::UInt8Array>(array_x);
     auto uint8t_array_y = std::static_pointer_cast<arrow::UInt8Array>(array_y);
     auto uint8t_array_z = std::static_pointer_cast<arrow::UInt8Array>(array_z);
@@ -95,8 +152,8 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 
     // Create a table for the output
     auto schema = arrow::schema({
-        arrow::field("a", arrow::int64()),
-        arrow::field("b", arrow::int64()),
+        arrow::field("a", arrow::int32()),
+        arrow::field("b", arrow::int32()),
         arrow::field("x", arrow::uint8()),
         arrow::field("y", arrow::uint8()),
         arrow::field("z", arrow::uint8()),
@@ -111,8 +168,17 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 
 int main()
 {
+    auto schema = arrow::schema({
+        arrow::field("a", arrow::int32()),
+        arrow::field("b", arrow::int32()),
+        arrow::field("x", arrow::uint8()),
+        arrow::field("y", arrow::uint8()),
+        arrow::field("z", arrow::uint8()),
+        arrow::field("n", arrow::float64())
+    });
+
     constexpr uint64_t size = 10'000'000;
-    alignas(8) uint8_t* dst = new unsigned char[size * (sizeof(int32_t) * 2 + sizeof(uint8_t) * 3 + sizeof(double))]{};
+    AoS aos(schema, size);
 
     std::shared_ptr<arrow::RecordBatch> record;
 
@@ -123,12 +189,19 @@ int main()
         return EXIT_FAILURE;
     }
 
-    status = RunConversion(record, dst);
+    status = RunConversion(record, aos);
     if (!status.ok())
     {
         std::cerr << status.ToString() << std::endl;
         return EXIT_FAILURE;
     }
+
+    status = CheckEquality(record, aos);
+    if (!status.ok())
+    {
+        std::cerr << status.ToString() << std::endl;
+        return EXIT_FAILURE;
+    }    
 
     return EXIT_SUCCESS;
 }
