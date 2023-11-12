@@ -10,7 +10,7 @@
 #include <format>
 
 #include "aos.h"
-#include "arrow_transpose.h"
+#include "soa2aos.h"
 #include "utility.h"
 
 // -------------------------------------------------------------------------

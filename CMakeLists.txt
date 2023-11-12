@@ -28,16 +28,15 @@ endmacro ()
 prepare_exec (memset
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
 )
-prepare_exec (naive_raw
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/naive_raw_transpose.cpp
+prepare_exec (soa2aos_naive_raw
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/soa2aos/naive_raw_transpose.cpp
 )
-
-prepare_exec (naive_arrow
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/naive_arrow.cpp
+prepare_exec (soa2aos_naive_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/soa2aos/naive_arrow.cpp
 )
 
 if(ARROW_LINK_SHARED)
-    target_link_libraries(naive_arrow PRIVATE Arrow::arrow_shared)
+    target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_shared)
 else()
-    target_link_libraries(naive_arrow PRIVATE Arrow::arrow_static)
+    target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_static)
 endif()
