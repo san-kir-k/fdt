@@ -9,7 +9,7 @@
 #include <string>
 #include <format>
 
-#include "aos.h"
+#include "aos/aos.h"
 #include "soa2aos.h"
 #include "utility.h"
 

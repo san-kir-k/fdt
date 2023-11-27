@@ -12,16 +12,16 @@
 #include <arrow/type_traits.h>
 
 #include "pretty_type_traits.h"
-#include "aos.h"
+#include "aos/aos.h"
 
-void AoS2SoAx4( const uint8_t* out,
-                uint64_t outsz,
-                uint8_t* p1,
-                uint8_t* p2,
-                uint8_t* p3,
-                uint8_t* p4,
-                uint64_t insz,
-                uint64_t datalen)
+inline void AoS2SoAx4(  const uint8_t* out,
+                        uint64_t outsz,
+                        uint8_t* p1,
+                        uint8_t* p2,
+                        uint8_t* p3,
+                        uint8_t* p4,
+                        uint64_t insz,
+                        uint64_t datalen)
 {
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(insz)];
@@ -39,13 +39,13 @@ void AoS2SoAx4( const uint8_t* out,
     }
 }
 
-void AoS2SoAx3( const uint8_t* out,
-                uint64_t outsz,
-                uint8_t* p1,
-                uint8_t* p2,
-                uint8_t* p3,
-                uint64_t insz,
-                uint64_t datalen)
+inline void AoS2SoAx3(  const uint8_t* out,
+                        uint64_t outsz,
+                        uint8_t* p1,
+                        uint8_t* p2,
+                        uint8_t* p3,
+                        uint64_t insz,
+                        uint64_t datalen)
 {
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(insz)];
@@ -62,12 +62,12 @@ void AoS2SoAx3( const uint8_t* out,
     }
 }
 
-void AoS2SoAx2( const uint8_t* out,
-                uint64_t outsz,
-                uint8_t* p1,
-                uint8_t* p2,
-                uint64_t insz,
-                uint64_t datalen)
+inline void AoS2SoAx2(  const uint8_t* out,
+                        uint64_t outsz,
+                        uint8_t* p1,
+                        uint8_t* p2,
+                        uint64_t insz,
+                        uint64_t datalen)
 {
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(insz)];
@@ -83,11 +83,11 @@ void AoS2SoAx2( const uint8_t* out,
     }
 }
 
-void AoS2SoAx1( const uint8_t* out,
-                uint64_t outsz,
-                uint8_t* p1,
-                uint64_t insz,
-                uint64_t datalen)
+inline void AoS2SoAx1(  const uint8_t* out,
+                        uint64_t outsz,
+                        uint8_t* p1,
+                        uint64_t insz,
+                        uint64_t datalen)
 {
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(insz)];
@@ -102,7 +102,7 @@ void AoS2SoAx1( const uint8_t* out,
     }
 }
 
-void AoS2SoA(const AoS& aos, std::shared_ptr<arrow::RecordBatch>& record_batch)
+inline void AoS2SoA(const AoS& aos, std::shared_ptr<arrow::RecordBatch>& record_batch)
 {
     uint64_t datalen = record_batch->num_rows();
     uint64_t aossz = aos.GetStructSize();

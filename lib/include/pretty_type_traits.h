@@ -5,6 +5,8 @@
 #include <arrow/type.h>
 #include <cassert>
 
+#include "aos/types/string.h"
+
 template <typename DataType,
           typename CType = typename arrow::TypeTraits<DataType>::CType>
 struct CTypeSizeTrait
@@ -15,8 +17,7 @@ struct CTypeSizeTrait
 template <typename DataType>
 inline constexpr uint64_t CTypeSize = CTypeSizeTrait<DataType>::size;
 
-// Only primitive supported yet
-uint64_t GetCTypeSize(std::shared_ptr<arrow::DataType> data)
+inline uint64_t GetCTypeSize(std::shared_ptr<arrow::DataType> data)
 {
     using namespace arrow;
     auto type_id = data->id();
@@ -43,8 +44,20 @@ uint64_t GetCTypeSize(std::shared_ptr<arrow::DataType> data)
             return CTypeSize<arrow::TypeIdTraits<arrow::Type::FLOAT>::Type>;
         case arrow::Type::DOUBLE:
             return CTypeSize<arrow::TypeIdTraits<arrow::Type::DOUBLE>::Type>;
+        case arrow::Type::STRING:
+            return sizeof(StringBuffer::String);
         default:
             assert(false);
             break;
     }
+}
+
+inline uint64_t GetFixedSizeTypeWidth(std::shared_ptr<arrow::DataType> data)
+{
+    return static_cast<uint64_t>(arrow::bit_width(data->id())) / 8ull;
+}
+
+inline bool IsPrimitive(std::shared_ptr<arrow::DataType> data)
+{
+    return arrow::is_primitive(data->id()) && (data->id() != arrow::Type::BOOL);
 }

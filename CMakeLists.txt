@@ -23,7 +23,25 @@ macro (prepare_exec TARGET SOURCE)
     target_include_directories (${TARGET} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/include
     )
+
+    target_link_libraries (${TARGET} PRIVATE
+        AoSlib
+        Arrow::arrow_shared
+    )
 endmacro ()
+
+add_library (AoSlib OBJECT
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/aos.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/string.cpp
+)
+
+target_include_directories (AoSlib PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/include
+)
+
+target_link_libraries (AoSlib PRIVATE
+    Arrow::arrow_shared
+)
 
 prepare_exec (memset
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
@@ -37,11 +55,3 @@ prepare_exec (soa2aos_naive_arrow
 prepare_exec (aos2soa_naive_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/aos2soa/naive_arrow.cpp
 )
-
-if(ARROW_LINK_SHARED)
-    target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_shared)
-    target_link_libraries(aos2soa_naive_arrow PRIVATE Arrow::arrow_shared)
-else()
-    target_link_libraries(soa2aos_naive_arrow PRIVATE Arrow::arrow_static)
-    target_link_libraries(aos2soa_naive_arrow PRIVATE Arrow::arrow_static)
-endif()
