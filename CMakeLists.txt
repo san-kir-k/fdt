@@ -48,6 +48,13 @@ macro (prepare_wide_bench)
             prepare_exec (aos2soa_wide_raw_static_${field_num}
                 ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
             )
+
+            prepare_exec (soa2aos_wide_arrow_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+            )
+            prepare_exec (aos2soa_wide_arrow_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+            )
         endforeach ()
     endforeach ()
 endmacro()
@@ -67,6 +74,13 @@ macro (prepare_long_bench)
                 ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
             )
             prepare_exec (aos2soa_long_raw_static_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+            )
+
+            prepare_exec (soa2aos_long_arrow_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+            )
+            prepare_exec (aos2soa_long_arrow_${field_num}
                 ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
             )
         endforeach ()

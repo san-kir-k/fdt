@@ -160,7 +160,6 @@ arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size)
         arrow::field("n", arrow::float64())
     });
 
-    AoS(schema, {array_a, array_b, array_x, array_y, array_z, array_n});
     aos = AoS::Make(schema, {array_a, array_b, array_x, array_y, array_z, array_n});
     return arrow::Status::OK();
 }

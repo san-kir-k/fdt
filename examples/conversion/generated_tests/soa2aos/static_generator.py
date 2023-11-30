@@ -14,7 +14,7 @@ includes_header: str = """
 
 """
 
-def consruct_soa_struct(field_types: list[str], types_map: dict) -> str:
+def construct_soa_struct(field_types: list[str], types_map: dict) -> str:
     struct_str: str = "struct alignas(8) SoA\n{\n"
     
     for i, type in enumerate(field_types):
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     
     with open(f'static_raw_n{args.number}.gen.cpp', 'w') as out:
         out.write(includes_header)
-        out.write(consruct_soa_struct(types, types_map))
+        out.write(construct_soa_struct(types, types_map))
         out.write(construct_run_func(types, types_map))
         out.write(construct_main_func(types, types_map))
     
