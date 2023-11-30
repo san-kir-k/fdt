@@ -30,6 +30,49 @@ macro (prepare_exec TARGET SOURCE)
     )
 endmacro ()
 
+macro (prepare_wide_bench)
+    execute_process (COMMAND cp -rf ${CMAKE_SOURCE_DIR}/examples/conversion/generated_tests/ ${CMAKE_BINARY_DIR}/generated_tests)
+    execute_process (COMMAND bash -c ./wide_generator.sh
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/generated_tests
+    )
+
+    set (field_nums "1;10;100;1000")
+    set (filenames_t "static_raw_n@.gen.cpp")
+    foreach (filename_t IN LISTS filenames_t)
+        foreach (field_num IN LISTS field_nums)
+            string (REPLACE "@" "${field_num}" filename ${filename_t})
+
+            prepare_exec (soa2aos_wide_raw_static_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+            )
+            prepare_exec (aos2soa_wide_raw_static_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+            )
+        endforeach ()
+    endforeach ()
+endmacro()
+
+macro (prepare_long_bench)
+    execute_process (COMMAND bash -c ./long_generator.sh
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/generated_tests
+    )
+
+    set (field_nums "10000;100000;1000000;10000000")
+    set (filenames_t "static_raw_l@.gen.cpp")
+    foreach (filename_t IN LISTS filenames_t)
+        foreach (field_num IN LISTS field_nums)
+            string (REPLACE "@" "${field_num}" filename ${filename_t})
+
+            prepare_exec (soa2aos_long_raw_static_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+            )
+            prepare_exec (aos2soa_long_raw_static_${field_num}
+                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+            )
+        endforeach ()
+    endforeach ()
+endmacro()
+
 add_library (AoSlib OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/aos.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/string.cpp
@@ -44,14 +87,20 @@ target_link_libraries (AoSlib PRIVATE
 )
 
 prepare_exec (memset
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/memset.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/memset.cpp
 )
-prepare_exec (soa2aos_naive_raw
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/soa2aos/naive_raw_transpose.cpp
+prepare_exec (soa2aos_naive_raw_static
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/naive_raw_static.cpp
 )
 prepare_exec (soa2aos_naive_arrow
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/soa2aos/naive_arrow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/naive_arrow.cpp
+)
+prepare_exec (aos2soa_naive_raw_static
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/naive_raw_static.cpp
 )
 prepare_exec (aos2soa_naive_arrow
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple/aos2soa/naive_arrow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/naive_arrow.cpp
 )
+
+prepare_wide_bench()
+prepare_long_bench()

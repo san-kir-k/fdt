@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "utility.h"
-#include "experimental/raw_transpose.h"
+#include "raw_static/soa2aos.h"
 
 // -------------------------------------------------------------------------
 
@@ -22,16 +22,16 @@ struct SoA
 
 void Naive(SoA& src, uint8_t* dst, uint64_t size)
 {
-    std::vector<AoSField> table = {
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.a), .size = sizeof(int)},
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.b), .size = sizeof(int)},
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.x), .size = sizeof(char)},
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.y), .size = sizeof(char)},
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.z), .size = sizeof(char)},
-        AoSField{.ptr = reinterpret_cast<uint8_t*>(src.n), .size = sizeof(double)},
+    std::vector<SoAField> table = {
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.a), .size = sizeof(int)},
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.b), .size = sizeof(int)},
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.x), .size = sizeof(char)},
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.y), .size = sizeof(char)},
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.z), .size = sizeof(char)},
+        SoAField{.ptr = reinterpret_cast<uint8_t*>(src.n), .size = sizeof(double)},
     };
 
-    BENCHMARK("Naive speed: ", size * (sizeof(int) * 2 + sizeof(char) * 3 + sizeof(double)), SoA2AoS, table, dst, size);
+    BENCHMARK("SoA -> AoS: Naive static speed: ", size * (sizeof(int) * 2 + sizeof(char) * 3 + sizeof(double)), SoA2AoS, table, dst, size);
 }
 
 // -------------------------------------------------------------------------

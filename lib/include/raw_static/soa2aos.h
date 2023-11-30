@@ -5,6 +5,8 @@
 #include <vector>  // instead of arrow
 #include <algorithm>
 
+#include "soa_field.h"
+
 void SoA2AoSx4( uint8_t* p1,     uint64_t sz1,
                 uint8_t* p2,     uint64_t sz2,
                 uint8_t* p3,     uint64_t sz3,
@@ -57,13 +59,7 @@ void SoA2AoSx1( uint8_t* p1,     uint64_t sz1,
     }
 }
 
-struct AoSField
-{
-    uint8_t*  ptr;
-    uint64_t        size;
-};
-
-void SoA2AoS(std::vector<AoSField>& table, uint8_t* out, uint64_t datalen)
+void SoA2AoS(std::vector<SoAField>& table, uint8_t* out, uint64_t datalen)
 {
     std::sort(table.begin(), table.end(), [](const auto& l, const auto& r) -> bool {
         return l.size < r.size;
