@@ -31,7 +31,7 @@ void Naive(SoA& src, uint8_t* dst, uint64_t size)
         SoAField{.ptr = reinterpret_cast<uint8_t*>(src.n), .size = sizeof(double)},
     };
 
-    BENCHMARK("SoA -> AoS: Naive static speed: ", size * (sizeof(int) * 2 + sizeof(char) * 3 + sizeof(double)), SoA2AoS, table, dst, size);
+    BENCHMARK_VOID("SoA -> AoS: Naive static speed: ", size * (sizeof(int) * 2 + sizeof(char) * 3 + sizeof(double)), SoA2AoS, table, dst, size);
 }
 
 // -------------------------------------------------------------------------

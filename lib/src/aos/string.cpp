@@ -1,8 +1,9 @@
 #include "aos/types/string.h"
 
-StringBuffer::String::String(uint8_t* data, uint64_t pos, const StringBuffer& parent)
+#include <utility>
+
+StringBuffer::String::String(uint8_t* data, const StringBuffer& parent)
     : m_data(data)
-    , m_pos(pos)
     , m_parent(parent)
 {
 }
@@ -13,26 +14,44 @@ std::string_view StringBuffer::String::DataView() const
 
     if (m_parent.IsEmbedded(size))
     {
-        return std::string_view(reinterpret_cast<char*>(m_data + 1), size);
+        uint8_t* internalPtr = m_data + 1;
+        return std::string_view(reinterpret_cast<char*>(internalPtr), size);
     }
     else
     {
-        return m_parent.m_buffer->GetView(m_pos);
+        uint8_t* externalPtr = m_data + 1;
+        return std::string_view(reinterpret_cast<char*>(externalPtr + 2), *reinterpret_cast<uint16_t*>(externalPtr));
     }
 }
 
-StringBuffer::StringBuffer(const std::shared_ptr<arrow::StringArray>& data, uint64_t threshold)
-    : m_threshold(threshold)
-    , m_buffer(data)
+StringBuffer::StringBuffer(const std::shared_ptr<uint8_t[]>& data, uint64_t capacity, uint64_t threshold)
+    : m_threshold(std::min(threshold, MAX_EMBEDDED_SIZE))
+    , m_buffer(std::move(data))
+    , m_capacity(capacity)
 {
-}
-
-bool StringBuffer::IsEmbedded(uint64_t size) const
-{
-    return size <= m_threshold;
 }
 
 uint64_t StringBuffer::GetThreshold() const
 {
     return m_threshold;
+}
+
+uint64_t& StringBuffer::GetSize()
+{
+    return m_size;
+}
+
+uint64_t StringBuffer::GetSize() const
+{
+    return m_size;
+}
+
+uint64_t StringBuffer::GetCapacity() const
+{
+    return m_capacity;
+}
+
+bool StringBuffer::IsEmbedded(uint64_t size) const
+{
+    return size <= m_threshold;
 }

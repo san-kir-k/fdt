@@ -116,5 +116,5 @@ prepare_exec (aos2soa_naive_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/naive_arrow.cpp
 )
 
-prepare_wide_bench()
-prepare_long_bench()
+# prepare_wide_bench()
+# prepare_long_bench()

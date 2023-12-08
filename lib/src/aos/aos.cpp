@@ -1,6 +1,8 @@
 #include "aos/aos.h"
 
-#include "soa2aos.h"
+#include <utility>
+
+#include "conversion/soa2aos.h"
 
 AoS::Struct::Struct(uint64_t pos, const AoS& parent)
     : m_pos(pos)
@@ -8,10 +10,10 @@ AoS::Struct::Struct(uint64_t pos, const AoS& parent)
 {
 }
 
-AoS::AoS(const std::shared_ptr<arrow::Schema>& schema, uint64_t length)
-    : m_length(length)
+AoS::AoS(const std::shared_ptr<arrow::Schema>& schema)
+    : m_length(0)
     , m_offsets(1, 0)
-    , m_extBuffers(m_length)
+    , m_extBuffers(schema->num_fields())
 {
     auto fields{schema->fields()};
 
@@ -37,22 +39,10 @@ AoS::AoS(const std::shared_ptr<arrow::Schema>& schema, uint64_t length)
     });
 
     m_schema = std::make_shared<arrow::Schema>(fields);
-
-    uint64_t totalSize = 0;
-    for (const auto& field: fields)
-    {
-        uint64_t size = GetCTypeSize(field->type());
-        m_offsets.push_back(m_offsets.back() + size);
-        totalSize += size;
-    }
-
-    BufferT(new uint8_t[totalSize * m_length]).swap(m_buffer);
 }
 
-AoS::AoS(const std::shared_ptr<arrow::Schema>& schema, const std::vector<std::shared_ptr<arrow::Array>>& data)
-    : m_length(data.front()->length())
-    , m_offsets(1, 0)
-    , m_extBuffers(m_length)
+std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
+                               const std::vector<std::shared_ptr<arrow::Array>>& data)
 {
     using TypeValuePair = std::pair<std::shared_ptr<arrow::Field>, std::shared_ptr<arrow::Array>>;
 
@@ -86,30 +76,115 @@ AoS::AoS(const std::shared_ptr<arrow::Schema>& schema, const std::vector<std::sh
         }
     });
 
+    // >>>    BUFFER BUILDER (wo shrink-to-fit), ALLOCATE_BUFFER <<< ????????
+
     for (uint64_t i = 0; i < toSort.size(); ++i)
     {
         fields[i] = toSort[i].first;
         dataCopy[i] = toSort[i].second;
     }
 
-    m_schema = std::make_shared<arrow::Schema>(fields);
+    auto schemaCopy = std::make_shared<arrow::Schema>(fields);
+
+    return SoA2AoS(arrow::RecordBatch::Make(schemaCopy, dataCopy.front()->length(), dataCopy));
+}
+
+void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
+{
+    m_length = record_batch->num_rows();
 
     uint64_t totalSize = 0;
-    for (const auto& field: fields)
+    for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
     {
-        uint64_t size = GetCTypeSize(field->type());
-        m_offsets.push_back(m_offsets.back() + size);
-        totalSize += size;
+        const auto& field = m_schema->fields()[i];
+        if (arrow::is_string(field->type()->id()))
+        {
+            auto fieldName = field->name();
+            auto strArray = std::static_pointer_cast<arrow::StringArray>(record_batch->GetColumnByName(fieldName));
+            // calc avg
+            uint64_t avgStrSize = strArray->total_values_length() / strArray->length();
+            // calc external buf size for string
+            uint64_t externalBufSize = (2 + avgStrSize) * strArray->length(); // 2 -- count of bytes for size
+
+
+            m_offsets.push_back(m_offsets.back() + avgStrSize + 1); // 1 -- len of str [0, 254], 255 -> external
+            totalSize += avgStrSize + 1;
+
+            std::shared_ptr<uint8_t[]> extBuffer(new uint8_t[externalBufSize]);
+            m_extBuffers[i] = std::shared_ptr<IBuffer>(new StringBuffer(extBuffer, externalBufSize, avgStrSize));
+        }
+        else
+        {
+            uint64_t size = GetCTypeSize(field->type());
+            m_offsets.push_back(m_offsets.back() + size);
+            totalSize += size;
+        }
     }
 
     BufferT(new uint8_t[totalSize * m_length]).swap(m_buffer);
-    SoA2AoS(arrow::RecordBatch::Make(m_schema, m_length, dataCopy), *this);
 }
 
-std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
-                               const std::vector<std::shared_ptr<arrow::Array>>& data)
+std::shared_ptr<arrow::RecordBatch> AoS::PrepareSoA() const
 {
-    return std::make_shared<AoS>(schema, data);
+    arrow::ArrayVector arrays;
+
+    for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
+    {
+        auto field = m_schema->field(i);
+        // понятия не имею, как сделать красивее
+        switch (field->type()->id())
+        {
+            case arrow::Type::INT8:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int8Type>::BuilderType>());
+                break;
+            case arrow::Type::INT16:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int16Type>::BuilderType>());
+                break;
+            case arrow::Type::INT32:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int32Type>::BuilderType>());
+                break;
+            case arrow::Type::INT64:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int64Type>::BuilderType>());
+                break;
+            case arrow::Type::UINT8:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt8Type>::BuilderType>());
+                break;
+            case arrow::Type::UINT16:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt16Type>::BuilderType>());
+                break;
+            case arrow::Type::UINT32:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt32Type>::BuilderType>());
+                break;
+            case arrow::Type::UINT64:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt64Type>::BuilderType>());
+                break;
+            case arrow::Type::FLOAT:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::FloatType>::BuilderType>());
+                break;
+            case arrow::Type::DOUBLE:
+                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::DoubleType>::BuilderType>());
+                break;
+            case arrow::Type::STRING:
+                arrays.push_back(
+                    ResizeArrayExternal<arrow::TypeTraits<arrow::StringType>::BuilderType>(
+                        dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
+                    )
+                );
+                break;
+            case arrow::Type::LARGE_STRING:
+                arrays.push_back(
+                    ResizeArrayExternal<arrow::TypeTraits<arrow::LargeStringType>::BuilderType>(
+                        dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
+                    )
+                );
+                break;
+            default:
+                assert(false);
+                break;
+        }
+    }
+
+    return arrow::RecordBatch::Make(m_schema, m_length, arrays);
 }
 
 uint8_t* AoS::GetBuffer()

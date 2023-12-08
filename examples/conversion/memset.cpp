@@ -9,7 +9,7 @@
 
 void BestPossible(uint8_t* dst, uint64_t size)
 {
-    BENCHMARK("Memset speed: ", size, std::memset, dst, '1', size);
+    BENCHMARK_VOID("Memset speed: ", size, std::memset, dst, '1', size);
 }
 
 // -------------------------------------------------------------------------

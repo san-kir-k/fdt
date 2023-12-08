@@ -9,6 +9,7 @@
 #include <arrow/api.h>
 #include <arrow/type.h>
 #include <arrow/record_batch.h>
+#include <iostream>
 
 #include "pretty_type_traits.h"
 #include "aos/types/string.h"
@@ -20,7 +21,7 @@ class AoS
 private:
     using SchemaT = std::shared_ptr<arrow::Schema>;
     using FieldsT = std::vector<std::shared_ptr<arrow::Field>>;
-    using BufferT = std::unique_ptr<uint8_t[]>;
+    using BufferT = std::shared_ptr<uint8_t[]>;
     using ExtBuffersT = std::vector<std::shared_ptr<IBuffer>>;
 
 private:
@@ -43,7 +44,7 @@ private:
             auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
             auto offset = m_parent.m_offsets[m_parent.m_schema->GetFieldIndex(fieldname)];
             auto* bufferPtr = dynamic_cast<StringBuffer*>(m_parent.m_extBuffers[m_pos].get());
-            return StringBuffer::String(structBuf + offset, m_pos, *bufferPtr);
+            return StringBuffer::String(structBuf + offset, *bufferPtr);
         }
 
     private:
@@ -52,13 +53,15 @@ private:
     };
 
 public:
-    AoS(const std::shared_ptr<arrow::Schema>& schema, uint64_t length);
-    AoS(const std::shared_ptr<arrow::Schema>& schema, const std::vector<std::shared_ptr<arrow::Array>>& data);
+    AoS(const std::shared_ptr<arrow::Schema>& schema);
 
     static std::shared_ptr<AoS> Make(const std::shared_ptr<arrow::Schema>& schema,
                                      const std::vector<std::shared_ptr<arrow::Array>>& data);
 
     ~AoS() = default;
+
+    void PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch);
+    std::shared_ptr<arrow::RecordBatch> PrepareSoA() const;
 
     uint8_t* GetBuffer();
     const uint8_t* GetBuffer() const;
@@ -69,6 +72,28 @@ public:
     const FieldsT& GetFields() const;
 
     Struct operator[](uint64_t pos) const;
+
+private:
+    template <typename BuilderT>
+    std::shared_ptr<arrow::Array> ResizeArray() const
+    {
+        BuilderT builder;
+        // TODO: do not ignore
+        [[maybe_unused]] auto ignore = builder.Resize(m_length);
+        ignore = builder.AppendNulls(m_length);
+        return builder.Finish().ValueOrDie();
+    }
+
+    template <typename BuilderT>
+    std::shared_ptr<arrow::Array> ResizeArrayExternal(uint64_t externalSize) const
+    {
+        BuilderT builder;
+        // TODO: do not ignore
+        [[maybe_unused]] auto ignore = builder.Resize(m_length);
+        ignore = builder.ReserveData(externalSize);
+        ignore = builder.AppendNulls(m_length);
+        return builder.Finish().ValueOrDie();
+    }
 
 private:
     uint64_t                m_length;

@@ -10,14 +10,14 @@
 #include <format>
 
 #include "aos/aos.h"
-#include "soa2aos.h"
+#include "conversion/soa2aos.h"
 #include "utility.h"
 
 // -------------------------------------------------------------------------
 
-arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, AoS& out)
+arrow::Status RunConversion(std::shared_ptr<arrow::RecordBatch> record, std::shared_ptr<AoS>& out)
 {
-    BENCHMARK("SoA -> AoS: Naive arrow speed: ", out.GetLength() * out.GetStructSize() , SoA2AoS, record, out);
+    BENCHMARK_RET("SoA -> AoS: Naive arrow speed: ", out->GetLength() * out->GetStructSize(), out, SoA2AoS, record);
     return arrow::Status::OK();
 }
 
@@ -178,8 +178,8 @@ int main()
     });
 
     constexpr uint64_t size = 10'000'000;
-    AoS aos(schema, size);
 
+    std::shared_ptr<AoS> aos;
     std::shared_ptr<arrow::RecordBatch> record;
 
     auto status = CreateAndFillRecordBatch(record, size);
@@ -196,7 +196,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    status = CheckEquality(record, aos);
+    status = CheckEquality(record, *aos);
     if (!status.ok())
     {
         std::cerr << status.ToString() << std::endl;
