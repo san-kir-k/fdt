@@ -17,7 +17,8 @@
 
 arrow::Status RunConversion(const AoS& aos, std::shared_ptr<arrow::RecordBatch>& out)
 {
-    BENCHMARK_RET("AoS -> SoA: Naive arrow speed: ", aos.GetLength() * aos.GetStructSize(), out, AoS2SoA, aos);
+    // BENCHMARK_RET("AoS -> SoA: Naive arrow speed: ", aos.GetLength() * aos.GetStructSize(), out, AoS2SoA, aos);
+    out = AoS2SoA(aos);
     return arrow::Status::OK();
 }
 

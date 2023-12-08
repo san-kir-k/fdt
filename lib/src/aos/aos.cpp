@@ -1,6 +1,8 @@
 #include "aos/aos.h"
 
 #include <utility>
+#include <cassert>
+#include <memory>
 
 #include "conversion/soa2aos.h"
 
@@ -76,8 +78,6 @@ std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
         }
     });
 
-    // >>>    BUFFER BUILDER (wo shrink-to-fit), ALLOCATE_BUFFER <<< ????????
-
     for (uint64_t i = 0; i < toSort.size(); ++i)
     {
         fields[i] = toSort[i].first;
@@ -124,67 +124,39 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
     BufferT(new uint8_t[totalSize * m_length]).swap(m_buffer);
 }
 
-std::shared_ptr<arrow::RecordBatch> AoS::PrepareSoA() const
+std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoA() const
 {
-    arrow::ArrayVector arrays;
+    std::vector<std::shared_ptr<arrow::Buffer>> buffers;
 
     for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
     {
         auto field = m_schema->field(i);
-        // понятия не имею, как сделать красивее
-        switch (field->type()->id())
+        if (arrow::is_numeric(field->type()->id()))
         {
-            case arrow::Type::INT8:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int8Type>::BuilderType>());
-                break;
-            case arrow::Type::INT16:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int16Type>::BuilderType>());
-                break;
-            case arrow::Type::INT32:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int32Type>::BuilderType>());
-                break;
-            case arrow::Type::INT64:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::Int64Type>::BuilderType>());
-                break;
-            case arrow::Type::UINT8:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt8Type>::BuilderType>());
-                break;
-            case arrow::Type::UINT16:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt16Type>::BuilderType>());
-                break;
-            case arrow::Type::UINT32:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt32Type>::BuilderType>());
-                break;
-            case arrow::Type::UINT64:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::UInt64Type>::BuilderType>());
-                break;
-            case arrow::Type::FLOAT:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::FloatType>::BuilderType>());
-                break;
-            case arrow::Type::DOUBLE:
-                arrays.push_back(ResizeArray<arrow::TypeTraits<arrow::DoubleType>::BuilderType>());
-                break;
-            case arrow::Type::STRING:
-                arrays.push_back(
-                    ResizeArrayExternal<arrow::TypeTraits<arrow::StringType>::BuilderType>(
-                        dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
-                    )
-                );
-                break;
-            case arrow::Type::LARGE_STRING:
-                arrays.push_back(
-                    ResizeArrayExternal<arrow::TypeTraits<arrow::LargeStringType>::BuilderType>(
-                        dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
-                    )
-                );
-                break;
-            default:
-                assert(false);
-                break;
+            arrow::Result<std::unique_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetCTypeSize(field->type()));
+            if (!maybe_buffer.ok())
+            {
+                // TODO: do not ignore errors
+            }
+            std::shared_ptr<arrow::Buffer> buffer = *std::move(maybe_buffer);
+            buffers.push_back(std::move(buffer));
+        }
+        else if (arrow::is_string(field->type()->id()))
+        {
+            // dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
+            assert(false && "Not implemented yet");
+        }
+        else if (arrow::is_list(field->type()->id()))
+        {
+            assert(false && "Not implemented yet");
+        }
+        else
+        {
+            assert(false && "Unsupported type");
         }
     }
 
-    return arrow::RecordBatch::Make(m_schema, m_length, arrays);
+    return buffers;
 }
 
 uint8_t* AoS::GetBuffer()
@@ -210,6 +182,11 @@ uint64_t AoS::GetStructSize() const
 const AoS::FieldsT& AoS::GetFields() const
 {
     return m_schema->fields();
+}
+
+const AoS::SchemaT& AoS::GetSchema() const
+{
+    return m_schema;
 }
 
 AoS::Struct AoS::operator[](uint64_t pos) const

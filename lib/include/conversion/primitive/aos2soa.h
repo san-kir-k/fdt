@@ -3,8 +3,6 @@
 #include <arrow/type_traits.h>
 #include <cstring>
 
-#include <iostream>
-
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void AoS2SoAx4(

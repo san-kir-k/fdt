@@ -61,7 +61,7 @@ public:
     ~AoS() = default;
 
     void PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch);
-    std::shared_ptr<arrow::RecordBatch> PrepareSoA() const;
+    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoA() const;
 
     uint8_t* GetBuffer();
     const uint8_t* GetBuffer() const;
@@ -71,29 +71,9 @@ public:
 
     const FieldsT& GetFields() const;
 
+    const SchemaT& GetSchema() const;
+
     Struct operator[](uint64_t pos) const;
-
-private:
-    template <typename BuilderT>
-    std::shared_ptr<arrow::Array> ResizeArray() const
-    {
-        BuilderT builder;
-        // TODO: do not ignore
-        [[maybe_unused]] auto ignore = builder.Resize(m_length);
-        ignore = builder.AppendNulls(m_length);
-        return builder.Finish().ValueOrDie();
-    }
-
-    template <typename BuilderT>
-    std::shared_ptr<arrow::Array> ResizeArrayExternal(uint64_t externalSize) const
-    {
-        BuilderT builder;
-        // TODO: do not ignore
-        [[maybe_unused]] auto ignore = builder.Resize(m_length);
-        ignore = builder.ReserveData(externalSize);
-        ignore = builder.AppendNulls(m_length);
-        return builder.Finish().ValueOrDie();
-    }
 
 private:
     uint64_t                m_length;

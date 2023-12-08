@@ -12,9 +12,9 @@
 
 inline std::shared_ptr<arrow::RecordBatch> AoS2SoA(const AoS& aos)
 {
-    auto record_batch = aos.PrepareSoA();
+    auto buffers = aos.PrepareSoA();
 
-    uint64_t datalen = record_batch->num_rows();
+    uint64_t datalen = aos.GetLength();
     uint64_t aossz = aos.GetStructSize();
     auto fields = aos.GetFields();
 
@@ -39,41 +39,61 @@ inline std::shared_ptr<arrow::RecordBatch> AoS2SoA(const AoS& aos)
 
         transpose4:
         {
-            auto p1 = record_batch->GetColumnByName(fields[i]->name());
-            auto p2 = record_batch->GetColumnByName(fields[i + 1]->name());
-            auto p3 = record_batch->GetColumnByName(fields[i + 2]->name());
-            auto p4 = record_batch->GetColumnByName(fields[i + 3]->name());
+            auto p1 = buffers[i];
+            std::cerr << "4: " << p1->size() << ", fieldsz: " << fieldsz << "\n";
+            auto p2 = buffers[i + 1];
+            auto p3 = buffers[i + 2];
+            auto p4 = buffers[i + 3];
 
-            AoS2SoAx4(aos.GetBuffer() + offset, aossz, p1, p2, p3, p4, fieldsz, datalen);
+            AoS2SoAx4(aos.GetBuffer() + offset, aossz, p1, p2, p3, p4, fieldsz, datalen, fields[i]->type()->id());
             goto update;
         }
         transpose3:
         {
-            auto p1 = record_batch->GetColumnByName(fields[i]->name());
-            auto p2 = record_batch->GetColumnByName(fields[i + 1]->name());
-            auto p3 = record_batch->GetColumnByName(fields[i + 2]->name());
+            auto p1 = buffers[i];
+            std::cerr << "3: " << p1->size() << ", fieldsz: " << fieldsz << "\n";
+            auto p2 = buffers[i + 1];
+            auto p3 = buffers[i + 2];
 
-            AoS2SoAx3(aos.GetBuffer() + offset, aossz, p1, p2, p3, fieldsz, datalen);
+            AoS2SoAx3(aos.GetBuffer() + offset, aossz, p1, p2, p3, fieldsz, datalen, fields[i]->type()->id());
             goto update;
         }
         transpose2:
         {
-            auto p1 = record_batch->GetColumnByName(fields[i]->name());
-            auto p2 = record_batch->GetColumnByName(fields[i + 1]->name());
+            auto p1 = buffers[i];
+            std::cerr << "2: " << p1->size() << ", fieldsz: " << fieldsz << "\n";
+            auto p2 = buffers[i + 1];
 
-            AoS2SoAx2(aos.GetBuffer() + offset, aossz, p1, p2, fieldsz, datalen);
+            AoS2SoAx2(aos.GetBuffer() + offset, aossz, p1, p2, fieldsz, datalen, fields[i]->type()->id());
             goto update;
         }
         transpose1:
         {
-            auto p1 = record_batch->GetColumnByName(fields[i]->name());;;
+            auto p1 = buffers[i];
+            std::cerr << "1: " << p1->size() << ", fieldsz: " << fieldsz << "\n";
 
-            AoS2SoAx1(aos.GetBuffer() + offset, aossz, p1, fieldsz, datalen);
+            AoS2SoAx1(aos.GetBuffer() + offset, aossz, p1, fieldsz, datalen, fields[i]->type()->id());
             goto update;
         }
         update:
             offset += rbound * fieldsz;
             i += rbound;
     }
-    return record_batch;
+
+    std::vector<std::shared_ptr<arrow::ArrayData>> columns;
+
+    for (uint64_t bi = 0; bi < buffers.size(); ++bi)
+    {
+        const auto& buffer = buffers[bi];
+        if (arrow::is_numeric(fields[bi]->type()->id()))
+        {
+            columns.push_back(std::make_shared<arrow::ArrayData>(fields[bi]->type(), datalen, std::vector(1, buffer)));
+        }
+        else
+        {
+            assert(false && "Not implemented");
+        }
+    }
+
+    return arrow::RecordBatch::Make(aos.GetSchema(), datalen, columns);
 }
