@@ -11,25 +11,26 @@
 
 
 inline void AoS2SoAx4(
-    const uint8_t* input, uint64_t insz,
+    const AoS& aos,
     std::shared_ptr<arrow::ArrayData>& p1, 
     std::shared_ptr<arrow::ArrayData>& p2,
     std::shared_ptr<arrow::ArrayData>& p3,
     std::shared_ptr<arrow::ArrayData>& p4,
-    uint64_t outsz, uint64_t datalen,
-    arrow::Type::type id)
+    uint64_t start_pos)
 {
-    if (arrow::is_numeric(id))
+    auto type = aos.GetFields()[start_pos]->type();
+
+    if (arrow::is_numeric(type->id()))
     {
-        AoS2SoAx4<arrow::NumberType>(input, insz, p1, p2, p3, p4, outsz, datalen);
+        AoS2SoAx4<arrow::NumberType>(aos, p1, p2, p3, p4, start_pos);
     }
-    else if (arrow::is_string(id))
+    else if (arrow::is_string(type->id()))
     {
-        AoS2SoAx4<arrow::StringType>(input, insz, p1, p2, p3, p4, outsz, datalen);
+        AoS2SoAx4<arrow::StringType>(aos, p1, p2, p3, p4, start_pos);
     }
-    else if (arrow::is_list(id))
+    else if (arrow::is_list(type->id()))
     {
-        AoS2SoAx4<arrow::ListType>(input, insz, p1, p2, p3, p4, outsz, datalen);
+        AoS2SoAx4<arrow::ListType>(aos, p1, p2, p3, p4, start_pos);
     }
     else
     {
@@ -38,24 +39,25 @@ inline void AoS2SoAx4(
 }
 
 inline void AoS2SoAx3(
-    const uint8_t* input, uint64_t insz,
-    std::shared_ptr<arrow::ArrayData>& p1,
+    const AoS& aos,
+    std::shared_ptr<arrow::ArrayData>& p1, 
     std::shared_ptr<arrow::ArrayData>& p2,
     std::shared_ptr<arrow::ArrayData>& p3,
-    uint64_t outsz, uint64_t datalen,
-    arrow::Type::type id)
+    uint64_t start_pos)
 {
-    if (arrow::is_numeric(id))
+    auto type = aos.GetFields()[start_pos]->type();
+
+    if (arrow::is_numeric(type->id()))
     {
-        AoS2SoAx3<arrow::NumberType>(input, insz, p1, p2, p3, outsz, datalen);
+        AoS2SoAx3<arrow::NumberType>(aos, p1, p2, p3, start_pos);
     }
-    else if (arrow::is_string(id))
+    else if (arrow::is_string(type->id()))
     {
-        AoS2SoAx3<arrow::StringType>(input, insz, p1, p2, p3, outsz, datalen);
+        AoS2SoAx3<arrow::StringType>(aos, p1, p2, p3, start_pos);
     }
-    else if (arrow::is_list(id))
+    else if (arrow::is_list(type->id()))
     {
-        AoS2SoAx3<arrow::ListType>(input, insz, p1, p2, p3, outsz, datalen);
+        AoS2SoAx3<arrow::ListType>(aos, p1, p2, p3, start_pos);
     }
     else
     {
@@ -64,23 +66,24 @@ inline void AoS2SoAx3(
 }
 
 inline void AoS2SoAx2(
-    const uint8_t* input, uint64_t insz,
+    const AoS& aos,
     std::shared_ptr<arrow::ArrayData>& p1, 
     std::shared_ptr<arrow::ArrayData>& p2,
-    uint64_t outsz, uint64_t datalen,
-    arrow::Type::type id)
+    uint64_t start_pos)
 {
-    if (arrow::is_numeric(id))
+    auto type = aos.GetFields()[start_pos]->type();
+
+    if (arrow::is_numeric(type->id()))
     {
-        AoS2SoAx2<arrow::NumberType>(input, insz, p1, p2, outsz, datalen);
+        AoS2SoAx2<arrow::NumberType>(aos, p1, p2, start_pos);
     }
-    else if (arrow::is_string(id))
+    else if (arrow::is_string(type->id()))
     {
-        AoS2SoAx2<arrow::StringType>(input, insz, p1, p2, outsz, datalen);
+        AoS2SoAx2<arrow::StringType>(aos, p1, p2, start_pos);
     }
-    else if (arrow::is_list(id))
+    else if (arrow::is_list(type->id()))
     {
-        AoS2SoAx2<arrow::ListType>(input, insz, p1, p2, outsz, datalen);
+        AoS2SoAx2<arrow::ListType>(aos, p1, p2, start_pos);
     }
     else
     {
@@ -89,22 +92,23 @@ inline void AoS2SoAx2(
 }
 
 inline void AoS2SoAx1(
-    const uint8_t* input, uint64_t insz,
+    const AoS& aos,
     std::shared_ptr<arrow::ArrayData>& p1, 
-    uint64_t outsz, uint64_t datalen,
-    arrow::Type::type id)
+    uint64_t start_pos)
 {
-    if (arrow::is_numeric(id))
+    auto type = aos.GetFields()[start_pos]->type();
+
+    if (arrow::is_numeric(type->id()))
     {
-        AoS2SoAx1<arrow::NumberType>(input, insz, p1, outsz, datalen);
+        AoS2SoAx1<arrow::NumberType>(aos, p1, start_pos);
     }
-    else if (arrow::is_string(id))
+    else if (arrow::is_string(type->id()))
     {
-        AoS2SoAx1<arrow::StringType>(input, insz, p1, outsz, datalen);
+        AoS2SoAx1<arrow::StringType>(aos, p1, start_pos);
     }
-    else if (arrow::is_list(id))
+    else if (arrow::is_list(type->id()))
     {
-        AoS2SoAx1<arrow::ListType>(input, insz, p1, outsz, datalen);
+        AoS2SoAx1<arrow::ListType>(aos, p1, start_pos);
     }
     else
     {

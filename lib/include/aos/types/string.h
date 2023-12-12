@@ -29,19 +29,20 @@ public:
     ~StringBuffer() = default;
 
     uint64_t GetThreshold() const;
-    uint64_t& GetSize();
+    uint64_t GetStringLength() const;
+    void SetStringLength(uint64_t length);
     uint64_t GetSize() const;
     uint64_t GetCapacity() const;
 
 private:
-    bool IsEmbedded(uint64_t size) const;
+    bool IsEmbedded(uint64_t length) const;
 
 private:
-    constexpr static uint64_t MAX_EMBEDDED_SIZE = 256;
+    constexpr static uint64_t MAX_EMBEDDED_LENGTH = 256;
 
 private:
     uint64_t                   m_threshold;
     std::shared_ptr<uint8_t[]> m_buffer;
-    uint64_t                   m_size{};
+    uint64_t                   m_length{};
     uint64_t                   m_capacity{};
 };

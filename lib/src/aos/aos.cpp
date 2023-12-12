@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "conversion/soa2aos.h"
+#include "aos/types/comparator.h"
 
 AoS::Struct::Struct(uint64_t pos, const AoS& parent)
     : m_pos(pos)
@@ -19,26 +20,7 @@ AoS::AoS(const std::shared_ptr<arrow::Schema>& schema)
 {
     auto fields{schema->fields()};
 
-    std::sort(fields.begin(), fields.end(), [](const auto& lhs, const auto& rhs) -> bool {
-        bool isLhsPrimitive = IsPrimitive(lhs->type());
-        bool isRhsPrimitive = IsPrimitive(rhs->type());
-
-        if (isLhsPrimitive != isRhsPrimitive)
-        {
-            return isLhsPrimitive;
-        }
-        else
-        {
-            if (isLhsPrimitive)
-            {
-                return GetFixedSizeTypeWidth(lhs->type()) < GetFixedSizeTypeWidth(rhs->type());
-            }
-            else
-            {
-                return lhs->type()->id() < rhs->type()->id();
-            }
-        }
-    });
+    std::sort(fields.begin(), fields.end(), TypesComparator{});
 
     m_schema = std::make_shared<arrow::Schema>(fields);
 }
@@ -57,26 +39,7 @@ std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
         toSort.emplace_back(fieldsCopy[i], dataCopy[i]);
     }
 
-    std::sort(toSort.begin(), toSort.end(), [](const auto& lhs, const auto& rhs) -> bool {
-        bool isLhsPrimitive = IsPrimitive(lhs.first->type());
-        bool isRhsPrimitive = IsPrimitive(rhs.first->type());
-
-        if (isLhsPrimitive != isRhsPrimitive)
-        {
-            return isLhsPrimitive;
-        }
-        else
-        {
-            if (isLhsPrimitive)
-            {
-                return GetFixedSizeTypeWidth(lhs.first->type()) < GetFixedSizeTypeWidth(rhs.first->type());
-            }
-            else
-            {
-                return lhs.first->type()->id() < rhs.first->type()->id();
-            }
-        }
-    });
+    std::sort(toSort.begin(), toSort.end(), TypesWithDataComparator{});
 
     for (uint64_t i = 0; i < toSort.size(); ++i)
     {
@@ -190,6 +153,11 @@ uint64_t AoS::GetLength() const
     return m_length;
 }
 
+uint64_t AoS::GetOffset(uint64_t pos) const
+{
+    return m_offsets[pos];
+}
+
 uint64_t AoS::GetStructSize() const
 {
     return m_offsets.back();
@@ -198,6 +166,28 @@ uint64_t AoS::GetStructSize() const
 const AoS::FieldsT& AoS::GetFields() const
 {
     return m_schema->fields();
+}
+
+uint64_t AoS::GetFieldSize(uint64_t pos) const
+{
+    const auto& field = m_schema->fields()[pos];
+        if (arrow::is_numeric(field->type()->id()))
+        {
+            return GetCTypeSize(field->type());
+        }
+        else if (arrow::is_string(field->type()->id()))
+        {
+            auto* bufferPtr = dynamic_cast<StringBuffer*>(m_extBuffers[pos].get());
+            return bufferPtr->GetSize();
+        }
+        else if (arrow::is_list(field->type()->id()))
+        {
+            assert(false && "Not implemented yet");
+        }
+        else
+        {
+            assert(false && "Unsupported type");
+        }
 }
 
 const AoS::SchemaT& AoS::GetSchema() const

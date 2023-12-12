@@ -70,8 +70,11 @@ public:
     uint64_t GetStructSize() const;
 
     const FieldsT& GetFields() const;
+    uint64_t GetFieldSize(uint64_t pos) const;
 
     const SchemaT& GetSchema() const;
+
+    uint64_t GetOffset(uint64_t pos) const;
 
     Struct operator[](uint64_t pos) const;
 
