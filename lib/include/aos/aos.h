@@ -61,9 +61,7 @@ public:
 
     void PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch);
 
-    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoABuffers() const;
-    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoAOffsets() const;
-    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoABitmaps() const;
+    std::vector<std::shared_ptr<arrow::ArrayData>> PrepareArrayData() const;
 
     uint8_t* GetBuffer();
     const uint8_t* GetBuffer() const;
@@ -76,6 +74,9 @@ public:
     const SchemaT& GetSchema() const;
 
     Struct operator[](uint64_t pos) const;
+
+private:
+    std::shared_ptr<arrow::Buffer> PrepareNotNullBitmap() const;
 
 private:
     uint64_t                m_length;

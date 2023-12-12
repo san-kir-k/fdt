@@ -12,29 +12,24 @@
 
 inline void AoS2SoAx4(
     const uint8_t* input, uint64_t insz,
-    std::shared_ptr<arrow::Buffer> p1, 
-    std::shared_ptr<arrow::Buffer> p2,
-    std::shared_ptr<arrow::Buffer> p3,
-    std::shared_ptr<arrow::Buffer> p4,
+    std::shared_ptr<arrow::ArrayData>& p1, 
+    std::shared_ptr<arrow::ArrayData>& p2,
+    std::shared_ptr<arrow::ArrayData>& p3,
+    std::shared_ptr<arrow::ArrayData>& p4,
     uint64_t outsz, uint64_t datalen,
     arrow::Type::type id)
 {
-    auto* rp1 = p1->mutable_data();
-    auto* rp2 = p2->mutable_data();
-    auto* rp3 = p3->mutable_data();
-    auto* rp4 = p4->mutable_data();
-
     if (arrow::is_numeric(id))
     {
-        AoS2SoAx4<arrow::NumberType>(input, insz, rp1, rp2, rp3, rp4, outsz, datalen);
+        AoS2SoAx4<arrow::NumberType>(input, insz, p1, p2, p3, p4, outsz, datalen);
     }
     else if (arrow::is_string(id))
     {
-        AoS2SoAx4<arrow::StringType>(input, insz, rp1, rp2, rp3, rp4, outsz, datalen);
+        AoS2SoAx4<arrow::StringType>(input, insz, p1, p2, p3, p4, outsz, datalen);
     }
     else if (arrow::is_list(id))
     {
-        AoS2SoAx4<arrow::ListType>(input, insz, rp1, rp2, rp3, rp4, outsz, datalen);
+        AoS2SoAx4<arrow::ListType>(input, insz, p1, p2, p3, p4, outsz, datalen);
     }
     else
     {
@@ -44,27 +39,23 @@ inline void AoS2SoAx4(
 
 inline void AoS2SoAx3(
     const uint8_t* input, uint64_t insz,
-    std::shared_ptr<arrow::Buffer> p1,
-    std::shared_ptr<arrow::Buffer> p2,
-    std::shared_ptr<arrow::Buffer> p3,
+    std::shared_ptr<arrow::ArrayData>& p1,
+    std::shared_ptr<arrow::ArrayData>& p2,
+    std::shared_ptr<arrow::ArrayData>& p3,
     uint64_t outsz, uint64_t datalen,
     arrow::Type::type id)
 {
-    auto* rp1 = p1->mutable_data();
-    auto* rp2 = p2->mutable_data();
-    auto* rp3 = p3->mutable_data();
-
     if (arrow::is_numeric(id))
     {
-        AoS2SoAx3<arrow::NumberType>(input, insz, rp1, rp2, rp3, outsz, datalen);
+        AoS2SoAx3<arrow::NumberType>(input, insz, p1, p2, p3, outsz, datalen);
     }
     else if (arrow::is_string(id))
     {
-        AoS2SoAx3<arrow::StringType>(input, insz, rp1, rp2, rp3, outsz, datalen);
+        AoS2SoAx3<arrow::StringType>(input, insz, p1, p2, p3, outsz, datalen);
     }
     else if (arrow::is_list(id))
     {
-        AoS2SoAx3<arrow::ListType>(input, insz, rp1, rp2, rp3, outsz, datalen);
+        AoS2SoAx3<arrow::ListType>(input, insz, p1, p2, p3, outsz, datalen);
     }
     else
     {
@@ -74,25 +65,22 @@ inline void AoS2SoAx3(
 
 inline void AoS2SoAx2(
     const uint8_t* input, uint64_t insz,
-    std::shared_ptr<arrow::Buffer> p1, 
-    std::shared_ptr<arrow::Buffer> p2,
+    std::shared_ptr<arrow::ArrayData>& p1, 
+    std::shared_ptr<arrow::ArrayData>& p2,
     uint64_t outsz, uint64_t datalen,
     arrow::Type::type id)
 {
-    auto* rp1 = p1->mutable_data();
-    auto* rp2 = p2->mutable_data();
-
     if (arrow::is_numeric(id))
     {
-        AoS2SoAx2<arrow::NumberType>(input, insz, rp1, rp2, outsz, datalen);
+        AoS2SoAx2<arrow::NumberType>(input, insz, p1, p2, outsz, datalen);
     }
     else if (arrow::is_string(id))
     {
-        AoS2SoAx2<arrow::StringType>(input, insz, rp1, rp2, outsz, datalen);
+        AoS2SoAx2<arrow::StringType>(input, insz, p1, p2, outsz, datalen);
     }
     else if (arrow::is_list(id))
     {
-        AoS2SoAx2<arrow::ListType>(input, insz, rp1, rp2, outsz, datalen);
+        AoS2SoAx2<arrow::ListType>(input, insz, p1, p2, outsz, datalen);
     }
     else
     {
@@ -102,23 +90,21 @@ inline void AoS2SoAx2(
 
 inline void AoS2SoAx1(
     const uint8_t* input, uint64_t insz,
-    std::shared_ptr<arrow::Buffer> p1, 
+    std::shared_ptr<arrow::ArrayData>& p1, 
     uint64_t outsz, uint64_t datalen,
     arrow::Type::type id)
 {
-    auto* rp1 = p1->mutable_data();
-
     if (arrow::is_numeric(id))
     {
-        AoS2SoAx1<arrow::NumberType>(input, insz, rp1, outsz, datalen);
+        AoS2SoAx1<arrow::NumberType>(input, insz, p1, outsz, datalen);
     }
     else if (arrow::is_string(id))
     {
-        AoS2SoAx1<arrow::StringType>(input, insz, rp1, outsz, datalen);
+        AoS2SoAx1<arrow::StringType>(input, insz, p1, outsz, datalen);
     }
     else if (arrow::is_list(id))
     {
-        AoS2SoAx1<arrow::ListType>(input, insz, rp1, outsz, datalen);
+        AoS2SoAx1<arrow::ListType>(input, insz, p1, outsz, datalen);
     }
     else
     {

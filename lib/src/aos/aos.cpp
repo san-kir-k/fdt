@@ -124,10 +124,11 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
     BufferT(new uint8_t[totalSize * m_length]).swap(m_buffer);
 }
 
-std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABuffers() const
+std::vector<std::shared_ptr<arrow::ArrayData>> AoS::PrepareArrayData() const
 {
-    std::vector<std::shared_ptr<arrow::Buffer>> buffers;
+    std::vector<std::shared_ptr<arrow::ArrayData>> arrays_data;
 
+    auto nnull_buffer = PrepareNotNullBitmap();
     for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
     {
         const auto& field = m_schema->fields()[i];
@@ -138,7 +139,7 @@ std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABuffers() const
             {
                 // TODO: do not ignore errors
             }
-            buffers.push_back(*maybe_buffer);
+            arrays_data.push_back(arrow::ArrayData::Make(field->type(), m_length, {nnull_buffer, *maybe_buffer}));
         }
         else if (arrow::is_string(field->type()->id()))
         {
@@ -155,21 +156,12 @@ std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABuffers() const
         }
     }
 
-    return buffers;
+    return arrays_data;
 }
 
-std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoAOffsets() const
-{
-    std::vector<std::shared_ptr<arrow::Buffer>> offsets;
-    assert(false && "Not implemented yet");
-    return offsets;
-}
-
-std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABitmaps() const
+std::shared_ptr<arrow::Buffer> AoS::PrepareNotNullBitmap() const
 {
     // Assume that all values in record_batch are valid without nulls
-    std::vector<std::shared_ptr<arrow::Buffer>> bitmaps(m_schema->num_fields());
-
     arrow::Result<std::shared_ptr<arrow::Buffer>> nnull_maybe_buffer = arrow::AllocateEmptyBitmap(m_length);
     if (!nnull_maybe_buffer.ok())
     {
@@ -180,12 +172,7 @@ std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABitmaps() const
     uint8_t* raw_nnull_buffer = nnull_buffer->mutable_data();
     std::memset(raw_nnull_buffer, 0xff, arrow::bit_util::BytesForBits(m_length));
 
-    for (auto& bitmap: bitmaps)
-    {
-        bitmap = nnull_buffer;
-    }
-
-    return bitmaps;
+    return nnull_buffer;
 }
 
 uint8_t* AoS::GetBuffer()
