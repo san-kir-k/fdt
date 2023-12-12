@@ -9,7 +9,6 @@
 #include <arrow/api.h>
 #include <arrow/type.h>
 #include <arrow/record_batch.h>
-#include <iostream>
 
 #include "pretty_type_traits.h"
 #include "aos/types/string.h"
@@ -61,7 +60,10 @@ public:
     ~AoS() = default;
 
     void PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch);
-    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoA() const;
+
+    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoABuffers() const;
+    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoAOffsets() const;
+    std::vector<std::shared_ptr<arrow::Buffer>> PrepareSoABitmaps() const;
 
     uint8_t* GetBuffer();
     const uint8_t* GetBuffer() const;

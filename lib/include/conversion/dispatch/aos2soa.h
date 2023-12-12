@@ -4,13 +4,12 @@
 #include <memory>
 #include <arrow/api.h>
 #include <arrow/type_traits.h>
-#include <iostream>
 
 #include "conversion/primitive/aos2soa.h"
 #include "conversion/string/aos2soa.h"
 #include "conversion/list/aos2soa.h"
 
-// TODO: remove const after preprocess add
+
 inline void AoS2SoAx4(
     const uint8_t* input, uint64_t insz,
     std::shared_ptr<arrow::Buffer> p1, 

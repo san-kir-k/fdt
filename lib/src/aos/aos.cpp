@@ -49,12 +49,12 @@ std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
     using TypeValuePair = std::pair<std::shared_ptr<arrow::Field>, std::shared_ptr<arrow::Array>>;
 
     auto dataCopy{data};
-    auto fields{schema->fields()};
+    auto fieldsCopy{schema->fields()};
     std::vector<TypeValuePair> toSort;
 
-    for (uint64_t i = 0; i < fields.size(); ++i)
+    for (uint64_t i = 0; i < fieldsCopy.size(); ++i)
     {
-        toSort.emplace_back(fields[i], dataCopy[i]);
+        toSort.emplace_back(fieldsCopy[i], dataCopy[i]);
     }
 
     std::sort(toSort.begin(), toSort.end(), [](const auto& lhs, const auto& rhs) -> bool {
@@ -80,11 +80,11 @@ std::shared_ptr<AoS> AoS::Make(const std::shared_ptr<arrow::Schema>& schema,
 
     for (uint64_t i = 0; i < toSort.size(); ++i)
     {
-        fields[i] = toSort[i].first;
+        fieldsCopy[i] = toSort[i].first;
         dataCopy[i] = toSort[i].second;
     }
 
-    auto schemaCopy = std::make_shared<arrow::Schema>(fields);
+    auto schemaCopy = std::make_shared<arrow::Schema>(fieldsCopy);
 
     return SoA2AoS(arrow::RecordBatch::Make(schemaCopy, dataCopy.front()->length(), dataCopy));
 }
@@ -124,22 +124,21 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
     BufferT(new uint8_t[totalSize * m_length]).swap(m_buffer);
 }
 
-std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoA() const
+std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABuffers() const
 {
     std::vector<std::shared_ptr<arrow::Buffer>> buffers;
 
     for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
     {
-        auto field = m_schema->field(i);
+        const auto& field = m_schema->fields()[i];
         if (arrow::is_numeric(field->type()->id()))
         {
-            arrow::Result<std::unique_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetCTypeSize(field->type()));
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetCTypeSize(field->type()));
             if (!maybe_buffer.ok())
             {
                 // TODO: do not ignore errors
             }
-            std::shared_ptr<arrow::Buffer> buffer = *std::move(maybe_buffer);
-            buffers.push_back(std::move(buffer));
+            buffers.push_back(*maybe_buffer);
         }
         else if (arrow::is_string(field->type()->id()))
         {
@@ -157,6 +156,36 @@ std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoA() const
     }
 
     return buffers;
+}
+
+std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoAOffsets() const
+{
+    std::vector<std::shared_ptr<arrow::Buffer>> offsets;
+    assert(false && "Not implemented yet");
+    return offsets;
+}
+
+std::vector<std::shared_ptr<arrow::Buffer>> AoS::PrepareSoABitmaps() const
+{
+    // Assume that all values in record_batch are valid without nulls
+    std::vector<std::shared_ptr<arrow::Buffer>> bitmaps(m_schema->num_fields());
+
+    arrow::Result<std::shared_ptr<arrow::Buffer>> nnull_maybe_buffer = arrow::AllocateEmptyBitmap(m_length);
+    if (!nnull_maybe_buffer.ok())
+    {
+        // TODO: do not ignore errors
+    }
+    auto nnull_buffer = *nnull_maybe_buffer;
+
+    uint8_t* raw_nnull_buffer = nnull_buffer->mutable_data();
+    std::memset(raw_nnull_buffer, 0xff, arrow::bit_util::BytesForBits(m_length));
+
+    for (auto& bitmap: bitmaps)
+    {
+        bitmap = nnull_buffer;
+    }
+
+    return bitmaps;
 }
 
 uint8_t* AoS::GetBuffer()
