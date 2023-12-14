@@ -41,8 +41,9 @@ private:
         StringBuffer::String Value(const std::string& fieldname) const
         {
             auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
-            auto offset = m_parent.m_offsets[m_parent.m_schema->GetFieldIndex(fieldname)];
-            auto* bufferPtr = dynamic_cast<StringBuffer*>(m_parent.m_extBuffers[m_pos].get());
+            auto field_pos = m_parent.m_schema->GetFieldIndex(fieldname);
+            auto offset = m_parent.m_offsets[field_pos];
+            auto* bufferPtr = dynamic_cast<StringBuffer*>(m_parent.m_extBuffers[field_pos].get());
             return StringBuffer::String(structBuf + offset, *bufferPtr);
         }
 
@@ -65,6 +66,9 @@ public:
 
     uint8_t* GetBuffer();
     const uint8_t* GetBuffer() const;
+
+    std::shared_ptr<IBuffer> GetExtBuffer(uint64_t pos);
+    const std::shared_ptr<IBuffer>& GetExtBuffer(uint64_t pos) const;
 
     uint64_t GetLength() const;
     uint64_t GetStructSize() const;

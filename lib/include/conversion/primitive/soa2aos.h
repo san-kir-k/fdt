@@ -8,7 +8,7 @@
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void SoA2AoSx4(
-    const std::shared_ptr<arrow::Array>& p1, 
+    const std::shared_ptr<arrow::Array>& p1,
     const std::shared_ptr<arrow::Array>& p2,
     const std::shared_ptr<arrow::Array>& p3,
     const std::shared_ptr<arrow::Array>& p4,
@@ -23,7 +23,7 @@ void SoA2AoSx4(
     uint64_t datalen = aos.GetLength();
     uint64_t aos_field_type_sz = aos.GetFieldSize(start_pos);
     uint64_t aos_struct_sz = aos.GetStructSize();
-    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);    
+    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);
 
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(aos_field_type_sz)];
@@ -43,7 +43,7 @@ void SoA2AoSx4(
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void SoA2AoSx3(
-    const std::shared_ptr<arrow::Array>& p1, 
+    const std::shared_ptr<arrow::Array>& p1,
     const std::shared_ptr<arrow::Array>& p2,
     const std::shared_ptr<arrow::Array>& p3,
     AoS& aos,
@@ -56,7 +56,7 @@ void SoA2AoSx3(
     uint64_t datalen = aos.GetLength();
     uint64_t aos_field_type_sz = aos.GetFieldSize(start_pos);
     uint64_t aos_struct_sz = aos.GetStructSize();
-    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);    
+    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);
 
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(aos_field_type_sz)];
@@ -75,7 +75,7 @@ void SoA2AoSx3(
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void SoA2AoSx2(
-    const std::shared_ptr<arrow::Array>& p1, 
+    const std::shared_ptr<arrow::Array>& p1,
     const std::shared_ptr<arrow::Array>& p2,
     AoS& aos,
     uint64_t start_pos)
@@ -86,7 +86,7 @@ void SoA2AoSx2(
     uint64_t datalen = aos.GetLength();
     uint64_t aos_field_type_sz = aos.GetFieldSize(start_pos);
     uint64_t aos_struct_sz = aos.GetStructSize();
-    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);    
+    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);
 
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(aos_field_type_sz)];
@@ -104,7 +104,7 @@ void SoA2AoSx2(
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void SoA2AoSx1(
-    const std::shared_ptr<arrow::Array>& p1, 
+    const std::shared_ptr<arrow::Array>& p1,
     AoS& aos,
     uint64_t start_pos)
 {
@@ -113,7 +113,7 @@ void SoA2AoSx1(
     uint64_t datalen = aos.GetLength();
     uint64_t aos_field_type_sz = aos.GetFieldSize(start_pos);
     uint64_t aos_struct_sz = aos.GetStructSize();
-    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);    
+    uint8_t* output = aos.GetBuffer() + aos.GetOffset(start_pos);
 
     static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
     goto *gotoTable[std::countr_zero(aos_field_type_sz)];

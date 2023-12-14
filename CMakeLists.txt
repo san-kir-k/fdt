@@ -109,12 +109,19 @@ prepare_exec (soa2aos_naive_raw_static
 prepare_exec (soa2aos_naive_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/naive_arrow.cpp
 )
+prepare_exec (soa2aos_strings_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/strings_arrow.cpp
+)
 prepare_exec (aos2soa_naive_raw_static
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/naive_raw_static.cpp
 )
 prepare_exec (aos2soa_naive_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/naive_arrow.cpp
 )
+prepare_exec (aos2soa_strings_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/strings_arrow.cpp
+)
+
 
 # prepare_wide_bench()
 # prepare_long_bench()

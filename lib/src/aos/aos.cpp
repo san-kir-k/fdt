@@ -60,27 +60,35 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
     for (uint64_t i = 0; i < m_schema->fields().size(); ++i)
     {
         const auto& field = m_schema->fields()[i];
-        if (arrow::is_string(field->type()->id()))
+        if (arrow::is_numeric(field->type()->id()))
+        {
+            uint64_t size = GetCTypeSize(field->type());
+            m_offsets.push_back(m_offsets.back() + size);
+            totalSize += size;
+        }
+        else if (arrow::is_string(field->type()->id()))
         {
             auto fieldName = field->name();
             auto strArray = std::static_pointer_cast<arrow::StringArray>(record_batch->GetColumnByName(fieldName));
             // calc avg
             uint64_t avgStrSize = strArray->total_values_length() / strArray->length();
             // calc external buf size for string
-            uint64_t externalBufSize = (2 + avgStrSize) * strArray->length(); // 2 -- count of bytes for size
-
-
-            m_offsets.push_back(m_offsets.back() + avgStrSize + 1); // 1 -- len of str [0, 254], 255 -> external
-            totalSize += avgStrSize + 1;
+            uint64_t externalBufSize = 2 * (2 + avgStrSize) * strArray->length(); // 2 -- count of bytes for size
 
             std::shared_ptr<uint8_t[]> extBuffer(new uint8_t[externalBufSize]);
             m_extBuffers[i] = std::shared_ptr<IBuffer>(new StringBuffer(extBuffer, externalBufSize, avgStrSize));
+
+            uint64_t inStructSize = std::static_pointer_cast<StringBuffer>(m_extBuffers[i])->GetSize();
+            totalSize += inStructSize;
+            m_offsets.push_back(m_offsets.back() + inStructSize);
+        }
+        else if (arrow::is_list(field->type()->id()))
+        {
+            assert(false && "Not implemented yet");
         }
         else
         {
-            uint64_t size = GetCTypeSize(field->type());
-            m_offsets.push_back(m_offsets.back() + size);
-            totalSize += size;
+            assert(false && "Unsupported type");
         }
     }
 
@@ -97,7 +105,7 @@ std::vector<std::shared_ptr<arrow::ArrayData>> AoS::PrepareArrayData() const
         const auto& field = m_schema->fields()[i];
         if (arrow::is_numeric(field->type()->id()))
         {
-            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetCTypeSize(field->type()));
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetFieldSize(i));
             if (!maybe_buffer.ok())
             {
                 // TODO: do not ignore errors
@@ -106,8 +114,20 @@ std::vector<std::shared_ptr<arrow::ArrayData>> AoS::PrepareArrayData() const
         }
         else if (arrow::is_string(field->type()->id()))
         {
-            // dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetCapacity()
-            assert(false && "Not implemented yet");
+            auto external_len = dynamic_cast<StringBuffer*>(m_extBuffers[i].get())->GetLength();
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(m_length * GetFieldSize(i) + external_len);
+            if (!maybe_buffer.ok())
+            {
+                // TODO: do not ignore errors
+            }
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_offsets_buffer = arrow::AllocateBuffer((m_length + 1) * sizeof(uint32_t));
+            if (!maybe_offsets_buffer.ok())
+            {
+                // TODO: do not ignore errors
+            }
+            auto offsets_buffer = *maybe_offsets_buffer;
+            offsets_buffer->mutable_data_as<uint32_t>()[0] = 0;
+            arrays_data.push_back(arrow::ArrayData::Make(field->type(), m_length, {nnull_buffer, offsets_buffer, *maybe_buffer}));
         }
         else if (arrow::is_list(field->type()->id()))
         {
@@ -146,6 +166,16 @@ uint8_t* AoS::GetBuffer()
 const uint8_t* AoS::GetBuffer() const
 {
     return m_buffer.get();
+}
+
+std::shared_ptr<IBuffer> AoS::GetExtBuffer(uint64_t pos)
+{
+    return m_extBuffers[pos];
+}
+
+const std::shared_ptr<IBuffer>& AoS::GetExtBuffer(uint64_t pos) const
+{
+    return m_extBuffers[pos];
 }
 
 uint64_t AoS::GetLength() const

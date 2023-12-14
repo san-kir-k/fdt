@@ -30,7 +30,7 @@ arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, cons
 
     if (static_cast<uint64_t>(record->num_rows()) != aos.GetLength())
     {
-        return arrow::Status::RError(std::format("Size must be equal: {} != {}", record->num_rows(), aos.GetLength()));
+        return arrow::Status::RError(std::format("Sizes must be equal: {} != {}", record->num_rows(), aos.GetLength()));
     }
 
     auto lhs = std::static_pointer_cast<ArrayDataType>(record->GetColumnByName(fieldname));

@@ -29,16 +29,21 @@ public:
     ~StringBuffer() = default;
 
     uint64_t GetThreshold() const;
-    uint64_t GetStringLength() const;
-    void SetStringLength(uint64_t length);
+
+    uint64_t GetLength() const;
+    uint64_t& GetLength();
+
+    uint8_t* GetBuffer();
+    const uint8_t* GetBuffer() const;
+
     uint64_t GetSize() const;
+
     uint64_t GetCapacity() const;
 
-private:
     bool IsEmbedded(uint64_t length) const;
 
 private:
-    constexpr static uint64_t MAX_EMBEDDED_LENGTH = 256;
+    constexpr static uint64_t MAX_EMBEDDED_LENGTH = 254;
 
 private:
     uint64_t                   m_threshold;

@@ -10,7 +10,7 @@ StringBuffer::String::String(uint8_t* data, const StringBuffer& parent)
 
 std::string_view StringBuffer::String::DataView() const
 {
-    uint8_t length = *m_data;
+    uint8_t length = m_data[0];
 
     if (m_parent.IsEmbedded(length))
     {
@@ -19,8 +19,8 @@ std::string_view StringBuffer::String::DataView() const
     }
     else
     {
-        uint8_t* externalPtr = reinterpret_cast<uint8_t*>(*(m_data + 1));
-        return std::string_view(reinterpret_cast<char*>(externalPtr + 2), *reinterpret_cast<uint16_t*>(externalPtr));
+        uint8_t* externalPtr = *(reinterpret_cast<uint8_t**>(m_data + 1));
+        return std::string_view(reinterpret_cast<char*>(externalPtr + sizeof(uint16_t)), *(reinterpret_cast<uint16_t*>(externalPtr)));
     }
 }
 
@@ -36,19 +36,29 @@ uint64_t StringBuffer::GetThreshold() const
     return m_threshold;
 }
 
-uint64_t StringBuffer::GetStringLength() const
+uint64_t StringBuffer::GetLength() const
 {
     return m_length;
 }
 
-void StringBuffer::SetStringLength(uint64_t length)
+uint64_t& StringBuffer::GetLength()
 {
-    m_length = length;
+    return m_length;
+}
+
+uint8_t* StringBuffer::GetBuffer()
+{
+    return m_buffer.get();
+}
+
+const uint8_t* StringBuffer::GetBuffer() const
+{
+    return m_buffer.get();
 }
 
 uint64_t StringBuffer::GetSize() const
 {
-    uint64_t embedded_size = std::min(m_threshold, MAX_EMBEDDED_LENGTH);
+    uint64_t embedded_size = m_threshold;
     uint64_t pointer_to_external_size = sizeof(uint8_t*);
     return std::max(embedded_size, pointer_to_external_size) + 1; // 1  -- len of str [0, 254], 255 -> external 
 }
