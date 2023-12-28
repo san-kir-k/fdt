@@ -44,8 +44,6 @@ inline uint64_t GetCTypeSize(std::shared_ptr<arrow::DataType> data)
             return CTypeSize<arrow::TypeIdTraits<arrow::Type::FLOAT>::Type>;
         case arrow::Type::DOUBLE:
             return CTypeSize<arrow::TypeIdTraits<arrow::Type::DOUBLE>::Type>;
-        case arrow::Type::STRING:
-            return sizeof(StringBuffer::String);
         default:
             assert(false);
             break;

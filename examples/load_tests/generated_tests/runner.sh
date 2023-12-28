@@ -17,8 +17,8 @@ echo
 for fields_num in 1 10 100 1000
 do
     echo "Columns: $fields_num"
-    ./soa2aos_wide_raw_static_$fields_num
-    ./aos2soa_wide_raw_static_$fields_num
+    ./soa2aos_wide_static_$fields_num
+    ./aos2soa_wide_static_$fields_num
     echo
 done
 echo
@@ -30,8 +30,8 @@ echo
 for length in 10000 100000 1000000 10000000
 do
     echo "Length: $length"
-    ./soa2aos_long_raw_static_$length
-    ./aos2soa_long_raw_static_$length
+    ./soa2aos_long_static_$length
+    ./aos2soa_long_static_$length
     echo
 done
 echo

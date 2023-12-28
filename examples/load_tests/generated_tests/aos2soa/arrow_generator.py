@@ -17,20 +17,20 @@ includes_header: str = """
 #include <format>
 
 #include "aos/aos.h"
-#include "soa2aos.h"
+#include "conversion/aos2soa.h"
 #include "utility.h"
 
 """
 
 def construct_run_func(field_types: list[str], types_map: dict) -> str:
-    run_func_str: str = "arrow::Status RunConversion(const std::shared_ptr<arrow::RecordBatch>& record, AoS& out)\n{\n"
-    run_func_str += '    BENCHMARK("SoA -> AoS: Naive arrow speed: ", out.GetLength() * out.GetStructSize() , SoA2AoS, record, out);\n'
+    run_func_str: str = "arrow::Status RunConversion(const AoS& aos, std::shared_ptr<arrow::RecordBatch>& out)\n{\n"
+    run_func_str += '    BENCHMARK_RET("AoS -> SoA: Primitive arrow speed: ", aos.GetLength() * aos.GetStructSize(), out, AoS2SoA, aos);\n'
     run_func_str += '    return arrow::Status::OK();\n}\n\n'
     return run_func_str
 
 
-def construct_fill_func(field_types: list[str], types_map: dict) -> str:
-    fill_func_str: str = 'arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& record, uint64_t size)\n{\n'
+def construct_fill_aos_func(field_types: list[str], types_map: dict) -> str:
+    fill_func_str: str = 'arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size)\n{\n'
     fill_func_str += '    arrow::NumericBuilder<arrow::UInt8Type> uint8_t_builder;\n    ARROW_RETURN_NOT_OK(uint8_t_builder.Resize(size));\n'
     fill_func_str += '    arrow::NumericBuilder<arrow::UInt16Type> uint16_t_builder;\n    ARROW_RETURN_NOT_OK(uint16_t_builder.Resize(size));\n'
     fill_func_str += '    arrow::NumericBuilder<arrow::UInt32Type> uint32_t_builder;\n    ARROW_RETURN_NOT_OK(uint32_t_builder.Resize(size));\n'
@@ -49,9 +49,9 @@ def construct_fill_func(field_types: list[str], types_map: dict) -> str:
         fill_func_str += f'        arrow::field("f{i}", arrow::{type[:-2]}()),\n'
     fill_func_str += f'    }});\n\n'
 
-    fill_func_str += '    record = arrow::RecordBatch::Make(schema, size, {'
+    fill_func_str += '    aos = AoS::Make(schema, {'
     for i, type in enumerate(field_types):
-        fill_func_str += f'array_f{i}, '
+        fill_func_str += f'{type}_array_f{i}, '
     fill_func_str += '});\n'
     fill_func_str += '    return arrow::Status::OK();\n}\n\n'
     
@@ -66,11 +66,11 @@ def construct_main_func(field_types: list[str], types_map: dict) -> str:
         main_func_str += f'        arrow::field("f{i}", arrow::{type[:-2]}()),\n'
     main_func_str += f'    }});\n\n'
     
-    main_func_str += "    constexpr uint64_t size = 100000;\n    AoS aos(schema, size);\n    std::shared_ptr<arrow::RecordBatch> record;\n"
-    main_func_str += "    auto status = CreateAndFillRecordBatch(record, size);\n    if (!status.ok())\n    {\n"
+    main_func_str += "    constexpr uint64_t size = 100000;\n    std::shared_ptr<AoS> aos;\n    std::shared_ptr<arrow::RecordBatch> record;\n"
+    main_func_str += "    auto status = FillAoS(aos, size);\n    if (!status.ok())\n    {\n"
     main_func_str += "        std::cerr << status.ToString() << std::endl;\n        return EXIT_FAILURE;\n    }\n\n"
     
-    main_func_str += "    status = RunConversion(record, aos);\n    if (!status.ok())\n    {\n        std::cerr << status.ToString() << std::endl;\n"
+    main_func_str += "    status = RunConversion(*aos, record);\n    if (!status.ok())\n    {\n        std::cerr << status.ToString() << std::endl;\n"
     main_func_str += "        return EXIT_FAILURE;\n    }\n"
     
     main_func_str += '    return EXIT_SUCCESS;\n}\n'
@@ -99,6 +99,6 @@ if __name__ == "__main__":
     with open(f'arrow_n{args.number}.gen.cpp', 'w') as out:
         out.write(includes_header)
         out.write(construct_run_func(types, types_map))
-        out.write(construct_fill_func(types, types_map))
+        out.write(construct_fill_aos_func(types, types_map))
         out.write(construct_main_func(types, types_map))
     

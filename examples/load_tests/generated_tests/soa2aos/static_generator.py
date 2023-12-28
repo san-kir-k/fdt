@@ -15,7 +15,7 @@ includes_header: str = """
 """
 
 def construct_soa_struct(field_types: list[str], types_map: dict) -> str:
-    struct_str: str = "struct alignas(8) SoA\n{\n"
+    struct_str: str = "struct SoA\n{\n"
     
     for i, type in enumerate(field_types):
         struct_str += f"    {type}*     f{i}{{}};\n"
@@ -31,7 +31,7 @@ def construct_run_func(field_types: list[str], types_map: dict) -> str:
         run_func_str += f"        SoAField{{.ptr = reinterpret_cast<uint8_t*>(src.f{i}), .size = sizeof({type})}},\n"
     run_func_str += "    };\n"
     
-    run_func_str += f'    BENCHMARK("SoA -> AoS: Raw static speed: ", size * (sizeof({base_types[0]}) * {types_map[base_types[0]]}'\
+    run_func_str += f'    BENCHMARK_VOID("SoA -> AoS: Primitive static speed: ", size * (sizeof({base_types[0]}) * {types_map[base_types[0]]}'\
                     f' + sizeof({base_types[1]}) * {types_map[base_types[1]]} + sizeof({base_types[2]}) * {types_map[base_types[2]]}'\
                     f' + sizeof({base_types[3]}) * {types_map[base_types[3]]}), SoA2AoS, table, dst, size);\n' + '}\n\n'
     return run_func_str
@@ -43,7 +43,7 @@ def construct_main_func(field_types: list[str], types_map: dict) -> str:
     for i, type in enumerate(field_types):
         main_func_str += f"    soa.f{i} = new {type}[size]{{}};\n"
     
-    main_func_str += f'    alignas(8) uint8_t* dst = new unsigned char[size * ('\
+    main_func_str += f'    uint8_t* dst = new unsigned char[size * ('\
                      f'sizeof({base_types[0]}) * {types_map[base_types[0]]} + sizeof({base_types[1]}) * {types_map[base_types[1]]} + '\
                      f'sizeof({base_types[2]}) * {types_map[base_types[2]]} + sizeof({base_types[3]}) * {types_map[base_types[3]]})]{{}};\n'
     
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         types.append(base_types[i % 4])
         types_map[types[-1]] += 1
     
-    with open(f'static_raw_n{args.number}.gen.cpp', 'w') as out:
+    with open(f'static_n{args.number}.gen.cpp', 'w') as out:
         out.write(includes_header)
         out.write(construct_soa_struct(types, types_map))
         out.write(construct_run_func(types, types_map))
