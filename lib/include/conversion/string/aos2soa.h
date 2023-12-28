@@ -6,6 +6,7 @@
 #include <cassert>
 
 #include "aos/types/string.h"
+#include "simd/memcpy.h"
 
 
 static inline void BasicCopy(
@@ -17,7 +18,7 @@ static inline void BasicCopy(
     {
         uint8_t sz = *(input + aos_struct_sz * index);
         ro[index + 1] = ro[index] + sz;
-        std::memcpy(rp, input + 1 + aos_struct_sz * index, sz);
+        simd_utils::memcpy(rp, input + 1 + aos_struct_sz * index, sz);
         rp += sz;
     }
     else
@@ -25,7 +26,7 @@ static inline void BasicCopy(
         const uint8_t* external_p = *(reinterpret_cast<uint8_t* const*>(input + 1 + aos_struct_sz * index));
         uint16_t sz = *(reinterpret_cast<const uint16_t*>(external_p));
         ro[index + 1] = ro[index] + sz;
-        std::memcpy(rp, external_p + sizeof(uint16_t), sz);
+        simd_utils::memcpy(rp, external_p + sizeof(uint16_t), sz);
         rp += sz;
     }
 }

@@ -5,6 +5,8 @@
 #include <cstring>
 #include <memory>
 
+#include "simd/memcpy.h"
+
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void AoS2SoAx4(
@@ -34,10 +36,10 @@ void AoS2SoAx4(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
-        std::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
-        std::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
-        std::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
     }
 }
 
@@ -67,9 +69,9 @@ void AoS2SoAx3(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
-        std::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
-        std::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
     }
 }
 
@@ -97,8 +99,8 @@ void AoS2SoAx2(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                 arrow_type_sz);
-        std::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz, arrow_type_sz);
+        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                 arrow_type_sz);
+        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz, arrow_type_sz);
     }
 }
 
@@ -124,6 +126,6 @@ void AoS2SoAx1(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i, arrow_type_sz);
+        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i, arrow_type_sz);
     }
 }

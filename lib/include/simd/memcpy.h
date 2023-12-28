@@ -1,23 +1,38 @@
 #pragma once
 
 #include <arm_neon.h>
+#include <cstring>
 #include <cstddef>
 
 namespace simd_utils {
 
-// https://stackoverflow.com/questions/43521147/how-to-load-4-unsigned-chars-and-convert-them-to-signed-shorts-with-neon
+#ifdef SIMD_MEMCPY
+
 void memcpy(void* dst, const void* src, size_t size)
 {
-    const int32_t* isrc = static_cast<const int32_t*>(src);
-    int32_t* idst = static_cast<int32_t*>(dst);
+    const uint8_t* byteSrc = reinterpret_cast<const uint8_t*>(src);
+    uint8_t* byteDst = reinterpret_cast<uint8_t*>(dst);
 
-    int32x4_t tmp;
-    // copy 128 bits at a time
-    for (size_t i = 0; i < size; i += 4)
+    size_t simdSize = size / 16; // Count of 128-bit blocks
+
+    for (size_t i = 0; i < simdSize; ++i)
     {
-        tmp = vld1q_s32(isrc + i); // load 4 elements to tmp SIMD register
-        vst1q_s32(&idst[i], tmp);  // copy 4 elements from tmp SIMD register
+        vst1q_u8(byteDst + i * 16, vld1q_u8(byteSrc + i * 16));
+    }
+
+    // Buffer remainder
+    uint8_t remainder = size % 16;
+
+    if (remainder > 0)
+    {
+        std::memcpy(byteDst + simdSize * 16, byteSrc + simdSize * 16, remainder);
     }
 }
 
-}
+#else
+
+using std::memcpy;
+
+#endif
+
+} // namespace simd_utils

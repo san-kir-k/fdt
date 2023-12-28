@@ -17,7 +17,7 @@
 
 arrow::Status RunConversion(std::shared_ptr<arrow::RecordBatch> record, std::shared_ptr<AoS>& out)
 {
-    BENCHMARK_RET("SoA -> AoS: Naive arrow speed: ", out->GetLength() * out->GetStructSize(), out, SoA2AoS, record);
+    BENCHMARK_RET("SoA -> AoS: Primitive arrow speed: ", out->GetLength() * out->GetStructSize(), out, SoA2AoS, record);
     return arrow::Status::OK();
 }
 
@@ -160,7 +160,7 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
         arrow::field("n", arrow::float64())
     });
 
-    record = arrow::RecordBatch::Make(schema, size, {array_a, array_b, array_x, array_y, array_z, array_n});
+    record = arrow::RecordBatch::Make(schema, size, {int64_array_a, int64_array_b, uint8t_array_x, uint8t_array_y, uint8t_array_z, double_array_n});
     return arrow::Status::OK();
 }
 
@@ -168,15 +168,6 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 
 int main()
 {
-    auto schema = arrow::schema({
-        arrow::field("a", arrow::int32()),
-        arrow::field("b", arrow::int32()),
-        arrow::field("x", arrow::uint8()),
-        arrow::field("y", arrow::uint8()),
-        arrow::field("z", arrow::uint8()),
-        arrow::field("n", arrow::float64())
-    });
-
     constexpr uint64_t size = 10'000'000;
 
     std::shared_ptr<AoS> aos;

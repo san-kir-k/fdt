@@ -6,6 +6,7 @@
 #include <cassert>
 
 #include "aos/types/string.h"
+#include "simd/memcpy.h"
 
 
 static inline void BasicCopy(
@@ -18,16 +19,16 @@ static inline void BasicCopy(
     if (external_buf->IsEmbedded(view.size()))
     {
         *(output + aos_struct_sz * index) = view.size();
-        std::memcpy(output + 1 + aos_struct_sz * index, view.data(), view.size());
+        simd_utils::memcpy(output + 1 + aos_struct_sz * index, view.data(), view.size());
     }
     else
     {
         *(output + aos_struct_sz * index) = 255;
         uint8_t* external_output = external_buf->GetBuffer() + external_buf->GetLength();
         *(reinterpret_cast<uint16_t*>(external_output)) = view.size();
-        std::memcpy(external_output + sizeof(uint16_t), view.data(), view.size());
+        simd_utils::memcpy(external_output + sizeof(uint16_t), view.data(), view.size());
         external_buf->GetLength() += sizeof(uint16_t) + view.size();
-        std::memcpy(output + 1 + aos_struct_sz * index, &external_output, sizeof(external_output));
+        simd_utils::memcpy(output + 1 + aos_struct_sz * index, &external_output, sizeof(external_output));
     }
 }
 

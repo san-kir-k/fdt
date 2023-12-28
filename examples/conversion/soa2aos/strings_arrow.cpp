@@ -127,7 +127,7 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
         arrow::field("c", arrow::utf8()),
     });
 
-    record = arrow::RecordBatch::Make(schema, size, {array_a, array_b, array_c});
+    record = arrow::RecordBatch::Make(schema, size, {str_array_a, str_array_b, str_array_c});
     return arrow::Status::OK();
 }
 
@@ -136,12 +136,6 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 int main()
 {
     std::srand(std::time(nullptr));
-
-    auto schema = arrow::schema({
-        arrow::field("a", arrow::utf8()),
-        arrow::field("b", arrow::utf8()),
-        arrow::field("c", arrow::utf8()),
-    });
 
     constexpr uint64_t size = 1'000'000;
 

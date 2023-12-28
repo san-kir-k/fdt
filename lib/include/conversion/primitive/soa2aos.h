@@ -5,6 +5,8 @@
 #include <cstring>
 #include <memory>
 
+#include "simd/memcpy.h"
+
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
 void SoA2AoSx4(
@@ -34,10 +36,10 @@ void SoA2AoSx4(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(output + aos_struct_sz * i,                       rp1 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + aos_field_type_sz,   rp2 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + 2*aos_field_type_sz, rp3 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + 3*aos_field_type_sz, rp4 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i,                       rp1 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + aos_field_type_sz,   rp2 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + 2*aos_field_type_sz, rp3 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + 3*aos_field_type_sz, rp4 + aos_field_type_sz * i, aos_field_type_sz);
     }
 }
 
@@ -67,9 +69,9 @@ void SoA2AoSx3(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(output + aos_struct_sz * i,                       rp1 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + aos_field_type_sz,   rp2 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + 2*aos_field_type_sz, rp3 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i,                       rp1 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + aos_field_type_sz,   rp2 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + 2*aos_field_type_sz, rp3 + aos_field_type_sz * i, aos_field_type_sz);
     }
 }
 
@@ -97,8 +99,8 @@ void SoA2AoSx2(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(output + aos_struct_sz * i,                     rp1 + aos_field_type_sz * i, aos_field_type_sz);
-        std::memcpy(output + aos_struct_sz * i + aos_field_type_sz, rp2 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i,                     rp1 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i + aos_field_type_sz, rp2 + aos_field_type_sz * i, aos_field_type_sz);
     }
 }
 
@@ -124,6 +126,6 @@ void SoA2AoSx1(
     b8x8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
-        std::memcpy(output + aos_struct_sz * i, rp1 + aos_field_type_sz * i, aos_field_type_sz);
+        simd_utils::memcpy(output + aos_struct_sz * i, rp1 + aos_field_type_sz * i, aos_field_type_sz);
     }
 }
