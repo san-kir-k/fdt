@@ -33,7 +33,7 @@ arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, cons
         return arrow::Status::RError(std::format("Sizes must be equal: {} != {}", record->num_rows(), aos.GetLength()));
     }
 
-    auto lhs = std::static_pointer_cast<ArrayDataType>(record->GetColumnByName(fieldname));
+    auto lhs = std::dynamic_pointer_cast<ArrayDataType>(record->GetColumnByName(fieldname));
 
     for (int64_t i = 0; i < record->num_rows(); i++)
     {
@@ -143,12 +143,12 @@ arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size)
     double_builder.Reset();
 
     // Cast the arrays to their actual types
-    auto int64_array_a  = std::static_pointer_cast<arrow::Int32Array>(array_a);
-    auto int64_array_b  = std::static_pointer_cast<arrow::Int32Array>(array_b);
-    auto uint8t_array_x = std::static_pointer_cast<arrow::UInt8Array>(array_x);
-    auto uint8t_array_y = std::static_pointer_cast<arrow::UInt8Array>(array_y);
-    auto uint8t_array_z = std::static_pointer_cast<arrow::UInt8Array>(array_z);
-    auto double_array_n = std::static_pointer_cast<arrow::DoubleArray>(array_n);
+    auto int64_array_a  = std::dynamic_pointer_cast<arrow::Int32Array>(array_a);
+    auto int64_array_b  = std::dynamic_pointer_cast<arrow::Int32Array>(array_b);
+    auto uint8t_array_x = std::dynamic_pointer_cast<arrow::UInt8Array>(array_x);
+    auto uint8t_array_y = std::dynamic_pointer_cast<arrow::UInt8Array>(array_y);
+    auto uint8t_array_z = std::dynamic_pointer_cast<arrow::UInt8Array>(array_z);
+    auto double_array_n = std::dynamic_pointer_cast<arrow::DoubleArray>(array_n);
 
     // Create a table for the output
     auto schema = arrow::schema({

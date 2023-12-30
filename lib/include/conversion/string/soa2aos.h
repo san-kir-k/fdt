@@ -42,15 +42,15 @@ void SoA2AoSx4(
     AoS& aos,
     uint64_t start_pos)
 {
-    auto sp1 = std::static_pointer_cast<arrow::StringArray>(p1);
-    auto sp2 = std::static_pointer_cast<arrow::StringArray>(p2);
-    auto sp3 = std::static_pointer_cast<arrow::StringArray>(p3);
-    auto sp4 = std::static_pointer_cast<arrow::StringArray>(p4);
+    auto sp1 = std::dynamic_pointer_cast<arrow::StringArray>(p1);
+    auto sp2 = std::dynamic_pointer_cast<arrow::StringArray>(p2);
+    auto sp3 = std::dynamic_pointer_cast<arrow::StringArray>(p3);
+    auto sp4 = std::dynamic_pointer_cast<arrow::StringArray>(p4);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
-    auto external_buf3 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
-    auto external_buf4 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 3));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf3 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
+    auto external_buf4 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 3));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
     uint64_t aos_str_size2 = aos.GetFieldSize(start_pos + 1);
@@ -82,13 +82,13 @@ void SoA2AoSx3(
     AoS& aos,
     uint64_t start_pos)
 {
-    auto sp1 = std::static_pointer_cast<arrow::StringArray>(p1);
-    auto sp2 = std::static_pointer_cast<arrow::StringArray>(p2);
-    auto sp3 = std::static_pointer_cast<arrow::StringArray>(p3);
+    auto sp1 = std::dynamic_pointer_cast<arrow::StringArray>(p1);
+    auto sp2 = std::dynamic_pointer_cast<arrow::StringArray>(p2);
+    auto sp3 = std::dynamic_pointer_cast<arrow::StringArray>(p3);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
-    auto external_buf3 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf3 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
     uint64_t aos_str_size2 = aos.GetFieldSize(start_pos + 1);
@@ -116,11 +116,11 @@ void SoA2AoSx2(
     AoS& aos,
     uint64_t start_pos)
 {
-    auto sp1 = std::static_pointer_cast<arrow::StringArray>(p1);
-    auto sp2 = std::static_pointer_cast<arrow::StringArray>(p2);
+    auto sp1 = std::dynamic_pointer_cast<arrow::StringArray>(p1);
+    auto sp2 = std::dynamic_pointer_cast<arrow::StringArray>(p2);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
 
@@ -144,9 +144,9 @@ void SoA2AoSx1(
     AoS& aos,
     uint64_t start_pos)
 {
-    auto sp1 = std::static_pointer_cast<arrow::StringArray>(p1);
+    auto sp1 = std::dynamic_pointer_cast<arrow::StringArray>(p1);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
 
     uint64_t datalen = aos.GetLength();
     uint64_t aos_struct_sz = aos.GetStructSize();

@@ -6,6 +6,8 @@
 
 #include "conversion/soa2aos.h"
 #include "aos/types/comparator.h"
+#include "aos/types/string.h"
+#include "aos/types/list.h"
 
 AoS::Struct::Struct(uint64_t pos, const AoS& parent)
     : m_pos(pos)
@@ -69,7 +71,7 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
         else if (arrow::is_string(field->type()->id()))
         {
             auto fieldName = field->name();
-            auto strArray = std::static_pointer_cast<arrow::StringArray>(record_batch->GetColumnByName(fieldName));
+            auto strArray = std::dynamic_pointer_cast<arrow::StringArray>(record_batch->GetColumnByName(fieldName));
             // calc avg
             uint64_t avgStrSize = strArray->total_values_length() / strArray->length();
             // calc external buf size for string
@@ -78,13 +80,23 @@ void AoS::PrepareSelf(std::shared_ptr<arrow::RecordBatch> record_batch)
             std::shared_ptr<uint8_t[]> extBuffer(new uint8_t[externalBufSize]);
             m_extBuffers[i] = std::shared_ptr<IBuffer>(new StringBuffer(extBuffer, externalBufSize, avgStrSize));
 
-            uint64_t inStructSize = std::static_pointer_cast<StringBuffer>(m_extBuffers[i])->GetSize();
+            uint64_t inStructSize = std::dynamic_pointer_cast<StringBuffer>(m_extBuffers[i])->GetSize();
             totalSize += inStructSize;
             m_offsets.push_back(m_offsets.back() + inStructSize);
         }
         else if (arrow::is_list(field->type()->id()))
         {
-            assert(false && "Not implemented yet");
+            auto fieldName = field->name();
+            auto listArray = std::dynamic_pointer_cast<arrow::ListArray>(record_batch->GetColumnByName(fieldName));
+            // calc external buf size for list, only primitive types are supported yet
+            uint64_t externalBufSize = 2 * listArray->offsets()->length() + GetCTypeSize(listArray->value_type()) * listArray->values()->length(); // 2 -- count of bytes for size
+
+            std::shared_ptr<uint8_t[]> extBuffer(new uint8_t[externalBufSize]);
+            m_extBuffers[i] = std::shared_ptr<IBuffer>(new ListBuffer(extBuffer, externalBufSize, GetCTypeSize(listArray->value_type())));
+
+            uint64_t inStructSize = std::dynamic_pointer_cast<ListBuffer>(m_extBuffers[i])->GetSize();
+            totalSize += inStructSize;
+            m_offsets.push_back(m_offsets.back() + inStructSize);
         }
         else
         {
@@ -131,7 +143,24 @@ std::vector<std::shared_ptr<arrow::ArrayData>> AoS::PrepareArrayData() const
         }
         else if (arrow::is_list(field->type()->id()))
         {
-            assert(false && "Not implemented yet");
+            auto* list_ptr = dynamic_cast<ListBuffer*>(m_extBuffers[i].get());
+            auto external_len = list_ptr->GetLength();
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_buffer = arrow::AllocateBuffer(external_len);
+            if (!maybe_buffer.ok())
+            {
+                // TODO: do not ignore errors
+            }
+            auto child_data = arrow::ArrayData::Make(
+                dynamic_pointer_cast<arrow::ListType>(field->type())->value_type(), list_ptr->GetElementsCount(), {nnull_buffer, *maybe_buffer});
+
+            arrow::Result<std::shared_ptr<arrow::Buffer>> maybe_offsets_buffer = arrow::AllocateBuffer((m_length + 1) * sizeof(uint32_t));
+            if (!maybe_offsets_buffer.ok())
+            {
+                // TODO: do not ignore errors
+            }
+            auto offsets_buffer = *maybe_offsets_buffer;
+            offsets_buffer->mutable_data_as<uint32_t>()[0] = 0;
+            arrays_data.push_back(arrow::ArrayData::Make(field->type(), m_length, {nnull_buffer, offsets_buffer}, {child_data}));
         }
         else
         {
@@ -212,7 +241,8 @@ uint64_t AoS::GetFieldSize(uint64_t pos) const
         }
         else if (arrow::is_list(field->type()->id()))
         {
-            assert(false && "Not implemented yet");
+            auto* bufferPtr = dynamic_cast<ListBuffer*>(m_extBuffers[pos].get());
+            return bufferPtr->GetSize();
         }
         else
         {

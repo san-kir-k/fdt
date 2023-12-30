@@ -25,7 +25,7 @@ public:
     };
 
 public:
-    StringBuffer(const std::shared_ptr<uint8_t[]>& data, uint64_t capacity, uint64_t threshold);
+    StringBuffer(std::shared_ptr<uint8_t[]> data, uint64_t capacity, uint64_t threshold);
     ~StringBuffer() = default;
 
     uint64_t GetThreshold() const;

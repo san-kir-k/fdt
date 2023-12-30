@@ -24,7 +24,7 @@ std::string_view StringBuffer::String::DataView() const
     }
 }
 
-StringBuffer::StringBuffer(const std::shared_ptr<uint8_t[]>& data, uint64_t capacity, uint64_t threshold)
+StringBuffer::StringBuffer(std::shared_ptr<uint8_t[]> data, uint64_t capacity, uint64_t threshold)
     : m_threshold(std::min(threshold, MAX_EMBEDDED_LENGTH))
     , m_buffer(std::move(data))
     , m_capacity(capacity)

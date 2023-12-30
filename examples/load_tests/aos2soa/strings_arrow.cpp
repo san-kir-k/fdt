@@ -47,7 +47,7 @@ arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size, uint64_t cols, u
         ARROW_RETURN_NOT_OK(str_builder.Finish(&array));
         str_builder.Reset();
 
-        to_record.push_back(std::static_pointer_cast<arrow::StringArray>(array));
+        to_record.push_back(std::dynamic_pointer_cast<arrow::StringArray>(array));
         to_schema.push_back(arrow::field(std::format("f_{}", il), arrow::utf8()));
     }
 

@@ -51,10 +51,10 @@ void AoS2SoAx4(
     uint32_t* ro3 = p3->GetMutableValues<uint32_t>(1);
     uint32_t* ro4 = p4->GetMutableValues<uint32_t>(1);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
-    auto external_buf3 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
-    auto external_buf4 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 3));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf3 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
+    auto external_buf4 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 3));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
     uint64_t aos_str_size2 = aos.GetFieldSize(start_pos + 1);
@@ -94,9 +94,9 @@ void AoS2SoAx3(
     uint32_t* ro2 = p2->GetMutableValues<uint32_t>(1);
     uint32_t* ro3 = p3->GetMutableValues<uint32_t>(1);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
-    auto external_buf3 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf3 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 2));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
     uint64_t aos_str_size2 = aos.GetFieldSize(start_pos + 1);
@@ -130,8 +130,8 @@ void AoS2SoAx2(
     uint32_t* ro1 = p1->GetMutableValues<uint32_t>(1);
     uint32_t* ro2 = p2->GetMutableValues<uint32_t>(1);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
-    auto external_buf2 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf2 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos + 1));
 
     uint64_t aos_str_size1 = aos.GetFieldSize(start_pos);
 
@@ -159,7 +159,7 @@ void AoS2SoAx1(
 
     uint32_t* ro1 = p1->GetMutableValues<uint32_t>(1);
 
-    auto external_buf1 = std::static_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
+    auto external_buf1 = std::dynamic_pointer_cast<StringBuffer>(aos.GetExtBuffer(start_pos));
 
     uint64_t datalen = aos.GetLength();
     uint64_t aos_struct_sz = aos.GetStructSize();

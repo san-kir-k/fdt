@@ -98,6 +98,7 @@ endmacro()
 add_library (AoSlib OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/aos.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/string.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/src/aos/list.cpp
 )
 
 target_include_directories (AoSlib PRIVATE
@@ -122,6 +123,9 @@ prepare_exec (soa2aos_primitive_arrow
 prepare_exec (soa2aos_strings_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/strings_arrow.cpp
 )
+prepare_exec (soa2aos_lists_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/soa2aos/lists_arrow.cpp
+)
 prepare_exec (aos2soa_primitive_static
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/primitive_static.cpp
 )
@@ -130,6 +134,9 @@ prepare_exec (aos2soa_primitive_arrow
 )
 prepare_exec (aos2soa_strings_arrow
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/strings_arrow.cpp
+)
+prepare_exec (aos2soa_lists_arrow
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/conversion/aos2soa/lists_arrow.cpp
 )
 
 # ------------------------------------------------------------------------------------------
@@ -142,4 +149,10 @@ prepare_exec (soa2aos_strings_arrow_load
 )
 prepare_exec (aos2soa_strings_arrow_load
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/load_tests/aos2soa/strings_arrow.cpp
+)
+prepare_exec (soa2aos_lists_arrow_load
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/load_tests/soa2aos/lists_arrow.cpp
+)
+prepare_exec (aos2soa_lists_arrow_load
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/load_tests/aos2soa/lists_arrow.cpp
 )

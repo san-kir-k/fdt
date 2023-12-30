@@ -42,7 +42,7 @@ def construct_fill_aos_func(field_types: list[str], types_map: dict) -> str:
         fill_func_str += f'    ARROW_RETURN_NOT_OK({type}_builder.AppendValues(values_f{i}));\n'
         fill_func_str += f'    ARROW_RETURN_NOT_OK({type}_builder.Finish(&array_f{i}));\n'
         fill_func_str += f'    {type}_builder.Reset();\n'
-        fill_func_str += f'    auto {type}_array_f{i}  = std::static_pointer_cast<arrow::{arrow_mapping[type]}Array>(array_f{i});\n\n'
+        fill_func_str += f'    auto {type}_array_f{i}  = std::dynamic_pointer_cast<arrow::{arrow_mapping[type]}Array>(array_f{i});\n\n'
     
     fill_func_str += f'    auto schema = arrow::schema({{\n'
     for i, type in enumerate(field_types):

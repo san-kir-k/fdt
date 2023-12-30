@@ -27,7 +27,6 @@ arrow::Status RunConversion(std::shared_ptr<arrow::RecordBatch> record, std::sha
 
 // -------------------------------------------------------------------------
 
-template <typename ArrayDataType>
 arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, const AoS& aos, const std::string& fieldname)
 {
     if (static_cast<uint64_t>(record->num_rows()) != aos.GetLength())
@@ -35,15 +34,15 @@ arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, cons
         return arrow::Status::RError(std::format("Sizes must be equal: {} != {}", record->num_rows(), aos.GetLength()));
     }
 
-    auto lhs = std::static_pointer_cast<ArrayDataType>(record->GetColumnByName(fieldname));
+    auto lhs = std::dynamic_pointer_cast<arrow::StringArray>(record->GetColumnByName(fieldname));
 
     for (int64_t i = 0; i < record->num_rows(); i++)
     {
         const auto& s = aos[i];
-        if (lhs->GetView(i) != s.Value(fieldname).DataView())
+        if (lhs->GetView(i) != s.Value<arrow::StringArray>(fieldname).DataView())
         {
             return arrow::Status::RError(std::format("Values must be equal: i = {}, field = {}, {} != {}",
-                                         i, fieldname, lhs->GetView(i), s.Value(fieldname).DataView()));
+                                         i, fieldname, lhs->GetView(i), s.Value<arrow::StringArray>(fieldname).DataView()));
         }
     }
 
@@ -52,15 +51,15 @@ arrow::Status CheckField(const std::shared_ptr<arrow::RecordBatch>& record, cons
 
 arrow::Status CheckEquality(const std::shared_ptr<arrow::RecordBatch>& record, const AoS& aos)
 {
-    if (auto status = CheckField<arrow::StringArray>(record, aos, "a"); !status.ok())
+    if (auto status = CheckField(record, aos, "a"); !status.ok())
     {
         return status;
     }
-    if (auto status = CheckField<arrow::StringArray>(record, aos, "b"); !status.ok())
+    if (auto status = CheckField(record, aos, "b"); !status.ok())
     {
         return status;
     }
-    if (auto status = CheckField<arrow::StringArray>(record, aos, "c"); !status.ok())
+    if (auto status = CheckField(record, aos, "c"); !status.ok())
     {
         return status;
     }
@@ -116,9 +115,9 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
     str_builder.Reset();
 
     // Cast the arrays to their actual types
-    auto str_array_a  = std::static_pointer_cast<arrow::StringArray>(array_a);
-    auto str_array_b  = std::static_pointer_cast<arrow::StringArray>(array_b);
-    auto str_array_c  = std::static_pointer_cast<arrow::StringArray>(array_c);
+    auto str_array_a  = std::dynamic_pointer_cast<arrow::StringArray>(array_a);
+    auto str_array_b  = std::dynamic_pointer_cast<arrow::StringArray>(array_b);
+    auto str_array_c  = std::dynamic_pointer_cast<arrow::StringArray>(array_c);
 
     // Create a table for the output
     auto schema = arrow::schema({

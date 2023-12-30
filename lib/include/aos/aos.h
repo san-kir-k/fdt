@@ -12,6 +12,7 @@
 
 #include "pretty_type_traits.h"
 #include "aos/types/string.h"
+#include "aos/types/list.h"
 #include "buffer/buffer.h"
 
 
@@ -30,7 +31,8 @@ private:
         Struct(uint64_t pos, const AoS& parent);
 
         template <typename DataType,
-                  typename CType = typename arrow::TypeTraits<DataType>::CType>
+                  typename CType = typename arrow::TypeTraits<DataType>::CType,
+                  arrow::enable_if_number<DataType, bool> = true>
         const CType& Value(const std::string& fieldname) const
         {
             auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
@@ -38,6 +40,8 @@ private:
             return *(reinterpret_cast<CType*>(structBuf + offset));
         }
 
+        template <typename DataType,
+                  std::enable_if_t<std::is_same_v<DataType, arrow::StringArray>, bool> = true>
         StringBuffer::String Value(const std::string& fieldname) const
         {
             auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
@@ -45,6 +49,17 @@ private:
             auto offset = m_parent.m_offsets[field_pos];
             auto* bufferPtr = dynamic_cast<StringBuffer*>(m_parent.m_extBuffers[field_pos].get());
             return StringBuffer::String(structBuf + offset, *bufferPtr);
+        }
+
+        template <typename DataType, typename ValueType,
+                  std::enable_if_t<std::is_same_v<DataType, arrow::ListArray>, bool> = true>
+        ListBuffer::Slice<ValueType> Value(const std::string& fieldname) const
+        {
+            auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
+            auto field_pos = m_parent.m_schema->GetFieldIndex(fieldname);
+            auto offset = m_parent.m_offsets[field_pos];
+            auto* bufferPtr = dynamic_cast<ListBuffer*>(m_parent.m_extBuffers[field_pos].get());
+            return ListBuffer::Slice<ValueType>(structBuf + offset, *bufferPtr);
         }
 
     private:
