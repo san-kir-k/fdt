@@ -1,12 +1,13 @@
 #pragma once
 
-#include <arm_neon.h>
 #include <cstring>
 #include <cstddef>
 
 namespace simd_utils {
 
 #ifdef SIMD_MEMCPY
+
+#include <arm_neon.h>
 
 void memcpy(void* dst, const void* src, size_t size)
 {

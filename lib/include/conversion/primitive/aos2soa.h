@@ -5,7 +5,9 @@
 #include <cstring>
 #include <memory>
 
-#include "simd/memcpy.h"
+#include <arm_neon.h>
+#include <simd/memcpy.h>
+#include <simd/load_lanes.h>
 
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
@@ -27,20 +29,106 @@ void AoS2SoAx4(
     uint64_t aos_struct_sz = aos.GetStructSize();
     const uint8_t* input = aos.GetBuffer() + aos.GetOffset(start_pos);
 
-    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
-    goto *gotoTable[std::countr_zero(aos_struct_sz)];
+    static const void* gotoTable[] = {&&b1, &&b2, &&b4, &&b8};
+    goto *gotoTable[std::countr_zero(arrow_type_sz)];
 
-    b8x1:
-    b8x2:
-    b8x4:
-    b8x8:
-    for (uint64_t i = 0; i < datalen; ++i)
+    b1:
     {
-        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
-        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
-        simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
-        simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        uint64_t count_of_blocks = datalen / 16;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint8x16x4_t to;
+            auto res = FOR_16_LOAD_LANES(vld4q_lane_u8, input + aos_struct_sz * 16 * i, to, aos_struct_sz, uint8_t);
+
+            vst1q_u8(rp1 + 16 * i, res.val[0]);
+            vst1q_u8(rp2 + 16 * i, res.val[1]);
+            vst1q_u8(rp3 + 16 * i, res.val[2]);
+            vst1q_u8(rp4 + 16 * i, res.val[3]);
+        }
+
+        for (uint64_t i = count_of_blocks * 16; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+            simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
     }
+    b2:
+    {
+        uint64_t count_of_blocks = datalen / 8;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint16x8x4_t to;
+            auto res = FOR_8_LOAD_LANES(vld4q_lane_u16, input + aos_struct_sz * 8 * i, to, aos_struct_sz, uint16_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u16(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u16(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u16(res.val[2]));
+            vst1q_u8(rp4 + 16 * i, vreinterpretq_u8_u16(res.val[3]));
+        }
+
+        for (uint64_t i = count_of_blocks * 8; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+            simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b4:
+    {
+        uint64_t count_of_blocks = datalen / 4;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint32x4x4_t to;
+            auto res = FOR_4_LOAD_LANES(vld4q_lane_u32, input + aos_struct_sz * 4 * i, to, aos_struct_sz, uint32_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u32(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u32(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u32(res.val[2]));
+            vst1q_u8(rp4 + 16 * i, vreinterpretq_u8_u32(res.val[3]));
+        }
+
+        for (uint64_t i = count_of_blocks * 4; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+            simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b8:
+    {
+        uint64_t count_of_blocks = datalen / 2;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint64x2x4_t to;
+            auto res = FOR_2_LOAD_LANES(vld4q_lane_u64, input + aos_struct_sz * 2 * i, to, aos_struct_sz, uint64_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u64(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u64(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u64(res.val[2]));
+            vst1q_u8(rp4 + 16 * i, vreinterpretq_u8_u64(res.val[3]));
+        }
+
+        for (uint64_t i = count_of_blocks * 2; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+            simd_utils::memcpy(rp4 + arrow_type_sz * i, input + aos_struct_sz * i + 3*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    end:;
 }
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
@@ -60,19 +148,98 @@ void AoS2SoAx3(
     uint64_t aos_struct_sz = aos.GetStructSize();
     const uint8_t* input = aos.GetBuffer() + aos.GetOffset(start_pos);
 
-    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
-    goto *gotoTable[std::countr_zero(aos_struct_sz)];
+    static const void* gotoTable[] = {&&b1, &&b2, &&b4, &&b8};
+    goto *gotoTable[std::countr_zero(arrow_type_sz)];
 
-    b8x1:
-    b8x2:
-    b8x4:
-    b8x8:
-    for (uint64_t i = 0; i < datalen; ++i)
+    b1:
     {
-        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
-        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
-        simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        uint64_t count_of_blocks = datalen / 16;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint8x16x3_t to;
+            auto res = FOR_16_LOAD_LANES(vld3q_lane_u8, input + aos_struct_sz * 16 * i, to, aos_struct_sz, uint8_t);
+
+            vst1q_u8(rp1 + 16 * i, res.val[0]);
+            vst1q_u8(rp2 + 16 * i, res.val[1]);
+            vst1q_u8(rp3 + 16 * i, res.val[2]);
+        }
+
+        for (uint64_t i = count_of_blocks * 16; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
     }
+    b2:
+    {
+        uint64_t count_of_blocks = datalen / 8;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint16x8x3_t to;
+            auto res = FOR_8_LOAD_LANES(vld3q_lane_u16, input + aos_struct_sz * 8 * i, to, aos_struct_sz, uint16_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u16(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u16(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u16(res.val[2]));
+        }
+
+        for (uint64_t i = count_of_blocks * 8; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b4:
+    {
+        uint64_t count_of_blocks = datalen / 4;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint32x4x3_t to;
+            auto res = FOR_4_LOAD_LANES(vld3q_lane_u32, input + aos_struct_sz * 4 * i, to, aos_struct_sz, uint32_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u32(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u32(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u32(res.val[2]));
+        }
+
+        for (uint64_t i = count_of_blocks * 4; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b8:
+    {
+        uint64_t count_of_blocks = datalen / 2;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint64x2x3_t to;
+            auto res = FOR_2_LOAD_LANES(vld3q_lane_u64, input + aos_struct_sz * 2 * i, to, aos_struct_sz, uint64_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u64(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u64(res.val[1]));
+            vst1q_u8(rp3 + 16 * i, vreinterpretq_u8_u64(res.val[2]));
+        }
+
+        for (uint64_t i = count_of_blocks * 2; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+            simd_utils::memcpy(rp3 + arrow_type_sz * i, input + aos_struct_sz * i + 2*arrow_type_sz, arrow_type_sz);
+        }
+
+        goto end;
+    }
+    end:;
 }
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
@@ -90,18 +257,90 @@ void AoS2SoAx2(
     uint64_t aos_struct_sz = aos.GetStructSize();
     const uint8_t* input = aos.GetBuffer() + aos.GetOffset(start_pos);
 
-    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
-    goto *gotoTable[std::countr_zero(aos_struct_sz)];
+    static const void* gotoTable[] = {&&b1, &&b2, &&b4, &&b8};
+    goto *gotoTable[std::countr_zero(arrow_type_sz)];
 
-    b8x1:
-    b8x2:
-    b8x4:
-    b8x8:
-    for (uint64_t i = 0; i < datalen; ++i)
+    b1:
     {
-        simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                 arrow_type_sz);
-        simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz, arrow_type_sz);
+        uint64_t count_of_blocks = datalen / 16;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint8x16x2_t to;
+            auto res = FOR_16_LOAD_LANES(vld2q_lane_u8, input + aos_struct_sz * 16 * i, to, aos_struct_sz, uint8_t);
+
+            vst1q_u8(rp1 + 16 * i, res.val[0]);
+            vst1q_u8(rp2 + 16 * i, res.val[1]);
+        }
+
+        for (uint64_t i = count_of_blocks * 16; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        }
+
+        goto end;
     }
+    b2:
+    {
+        uint64_t count_of_blocks = datalen / 8;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint16x8x2_t to;
+            auto res = FOR_8_LOAD_LANES(vld2q_lane_u16, input + aos_struct_sz * 8 * i, to, aos_struct_sz, uint16_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u16(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u16(res.val[1]));
+        }
+
+        for (uint64_t i = count_of_blocks * 8; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b4:
+    {
+        uint64_t count_of_blocks = datalen / 4;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint32x4x2_t to;
+            auto res = FOR_4_LOAD_LANES(vld2q_lane_u32, input + aos_struct_sz * 4 * i, to, aos_struct_sz, uint32_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u32(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u32(res.val[1]));
+        }
+
+        for (uint64_t i = count_of_blocks * 4; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        }
+
+        goto end;
+    }
+    b8:
+    {
+        uint64_t count_of_blocks = datalen / 2;
+        for (uint64_t i = 0; i < count_of_blocks; ++i)
+        {
+            uint64x2x2_t to;
+            auto res = FOR_2_LOAD_LANES(vld2q_lane_u64, input + aos_struct_sz * 2 * i, to, aos_struct_sz, uint64_t);
+
+            vst1q_u8(rp1 + 16 * i, vreinterpretq_u8_u64(res.val[0]));
+            vst1q_u8(rp2 + 16 * i, vreinterpretq_u8_u64(res.val[1]));
+        }
+
+        for (uint64_t i = count_of_blocks * 2; i < datalen; ++i)
+        {
+            simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i,                   arrow_type_sz);
+            simd_utils::memcpy(rp2 + arrow_type_sz * i, input + aos_struct_sz * i + arrow_type_sz,   arrow_type_sz);
+        }
+
+        goto end;
+    }
+    end:;
 }
 
 template <typename T, arrow::enable_if_number<T, bool> = true>
@@ -117,13 +356,13 @@ void AoS2SoAx1(
     uint64_t aos_struct_sz = aos.GetStructSize();
     const uint8_t* input = aos.GetBuffer() + aos.GetOffset(start_pos);
 
-    static const void* gotoTable[] = {&&b8x1, &&b8x2, &&b8x4, &&b8x8};
-    goto *gotoTable[std::countr_zero(aos_struct_sz)];
+    static const void* gotoTable[] = {&&b1, &&b2, &&b4, &&b8};
+    goto *gotoTable[std::countr_zero(arrow_type_sz)];
 
-    b8x1:
-    b8x2:
-    b8x4:
-    b8x8:
+    b1:
+    b2:
+    b4:
+    b8:
     for (uint64_t i = 0; i < datalen; ++i)
     {
         simd_utils::memcpy(rp1 + arrow_type_sz * i, input + aos_struct_sz * i, arrow_type_sz);

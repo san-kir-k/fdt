@@ -192,7 +192,7 @@ int main()
     {
         std::cerr << status.ToString() << std::endl;
         return EXIT_FAILURE;
-    }    
+    }
 
     return EXIT_SUCCESS;
 }

@@ -48,7 +48,6 @@ inline std::shared_ptr<AoS> SoA2AoS(std::shared_ptr<arrow::RecordBatch> record_b
             auto p1 = record_batch->GetColumnByName(fields[i]->name());
             auto p2 = record_batch->GetColumnByName(fields[i + 1]->name());
             auto p3 = record_batch->GetColumnByName(fields[i + 2]->name());
-
             SoA2AoSx3(p1, p2, p3, *aos, i);
             goto update;
         }
@@ -56,14 +55,12 @@ inline std::shared_ptr<AoS> SoA2AoS(std::shared_ptr<arrow::RecordBatch> record_b
         {
             auto p1 = record_batch->GetColumnByName(fields[i]->name());
             auto p2 = record_batch->GetColumnByName(fields[i + 1]->name());
-
             SoA2AoSx2(p1, p2, *aos, i);
             goto update;
         }
         transpose1:
         {
             auto p1 = record_batch->GetColumnByName(fields[i]->name());
-
             SoA2AoSx1(p1, *aos, i);
             goto update;
         }
