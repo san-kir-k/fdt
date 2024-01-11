@@ -43,25 +43,28 @@ macro (prepare_wide_bench)
     )
 
     set (field_nums "1;10;100;1000")
-    set (filenames_t "static_n@.gen.cpp")
-    foreach (filename_t IN LISTS filenames_t)
-        foreach (field_num IN LISTS field_nums)
-            string (REPLACE "@" "${field_num}" filename ${filename_t})
+    set (filename_t "static_n@.gen.cpp")
+    foreach (field_num IN LISTS field_nums)
+        string (REPLACE "@" "${field_num}" filename ${filename_t})
 
-            prepare_exec (soa2aos_wide_static_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
-            )
-            prepare_exec (aos2soa_wide_static_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
-            )
+        prepare_exec (soa2aos_wide_static_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+        )
+        prepare_exec (aos2soa_wide_static_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+        )
+    endforeach ()
 
-            prepare_exec (soa2aos_wide_arrow_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
-            )
-            prepare_exec (aos2soa_wide_arrow_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
-            )
-        endforeach ()
+    set (filename_t "arrow_n@.gen.cpp")
+    foreach (field_num IN LISTS field_nums)
+        string (REPLACE "@" "${field_num}" filename ${filename_t})
+
+        prepare_exec (soa2aos_wide_arrow_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+        )
+        prepare_exec (aos2soa_wide_arrow_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+        )
     endforeach ()
 endmacro()
 
@@ -71,25 +74,28 @@ macro (prepare_long_bench)
     )
 
     set (field_nums "10000;100000;1000000;10000000")
-    set (filenames_t "static_l@.gen.cpp")
-    foreach (filename_t IN LISTS filenames_t)
-        foreach (field_num IN LISTS field_nums)
-            string (REPLACE "@" "${field_num}" filename ${filename_t})
+    set (filename_t "static_l@.gen.cpp")
+    foreach (field_num IN LISTS field_nums)
+        string (REPLACE "@" "${field_num}" filename ${filename_t})
 
-            prepare_exec (soa2aos_long_static_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
-            )
-            prepare_exec (aos2soa_long_static_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
-            )
+        prepare_exec (soa2aos_long_static_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+        )
+        prepare_exec (aos2soa_long_static_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+        )
+    endforeach ()
 
-            prepare_exec (soa2aos_long_arrow_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
-            )
-            prepare_exec (aos2soa_long_arrow_${field_num}
-                ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
-            )
-        endforeach ()
+    set (filename_t "arrow_l@.gen.cpp")
+    foreach (field_num IN LISTS field_nums)
+        string (REPLACE "@" "${field_num}" filename ${filename_t})
+
+        prepare_exec (soa2aos_long_arrow_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/soa2aos/${filename}
+        )
+        prepare_exec (aos2soa_long_arrow_${field_num}
+            ${CMAKE_BINARY_DIR}/generated_tests/aos2soa/${filename}
+        )
     endforeach ()
 endmacro()
 
