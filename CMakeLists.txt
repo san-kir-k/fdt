@@ -162,3 +162,12 @@ prepare_exec (soa2aos_lists_arrow_load
 prepare_exec (aos2soa_lists_arrow_load
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/load_tests/aos2soa/lists_arrow.cpp
 )
+
+# ------------------------------------------------------------------------------------------
+
+prepare_exec (data_process_column
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/data_process/column.cpp
+)
+prepare_exec (data_process_row
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/data_process/row.cpp
+)
