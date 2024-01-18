@@ -61,40 +61,6 @@ arrow::Status CreateAndFillRecordBatch(std::shared_ptr<arrow::RecordBatch>& reco
 
 // -------------------------------------------------------------------------
 
-arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size, uint64_t cols, uint64_t list_len)
-{
-    arrow::MemoryPool* pool = arrow::default_memory_pool();
-    arrow::ListBuilder list_int64_builder(pool, std::make_shared<arrow::Int64Builder>(pool));
-    arrow::Int64Builder* int64_builder = (dynamic_cast<arrow::Int64Builder*>(list_int64_builder.value_builder()));
-
-    arrow::FieldVector to_schema;
-    arrow::ArrayVector to_record;
-
-    for (uint64_t il = 0; il < cols; ++il)
-    {
-        std::shared_ptr<arrow::Array> array;
-        for (uint64_t i = 0; i < size; ++i)
-        {
-            auto sz = std::rand() % list_len + 1;
-            TOTAL_SIZE += sz * sizeof(int64_t);
-            ARROW_RETURN_NOT_OK(list_int64_builder.Append());
-            ARROW_RETURN_NOT_OK(int64_builder->AppendValues(std::vector<int64_t>(sz, 42)));
-        }
-        ARROW_RETURN_NOT_OK(list_int64_builder.Finish(&array));
-        int64_builder->Reset();
-        list_int64_builder.Reset();
-
-        to_record.push_back(std::dynamic_pointer_cast<arrow::ListArray>(array));
-        to_schema.push_back(arrow::field(std::format("f_{}", il), arrow::list(arrow::int64())));
-    }
-
-    auto schema = arrow::schema(to_schema);
-    aos = AoS::Make(schema, to_record);
-    return arrow::Status::OK();
-}
-
-// -------------------------------------------------------------------------
-
 arrow::Status RunLongTests()
 {
     std::cout << ">>> Running long tests (cols = 10) <<<\n";
@@ -112,7 +78,7 @@ arrow::Status RunLongTests()
             std::shared_ptr<AoS> aos;
             std::shared_ptr<arrow::RecordBatch> record;
 
-            auto status = FillAoS(aos, rows, cols_size, list_len);
+            auto status = CreateAndFillRecordBatch(record, rows, cols_size, list_len);
             if (!status.ok())
             {
                 std::cerr << status.ToString() << std::endl;
@@ -153,7 +119,7 @@ arrow::Status RunWideTests()
             std::shared_ptr<AoS> aos;
             std::shared_ptr<arrow::RecordBatch> record;
 
-            auto status = FillAoS(aos, size, cols, list_len);
+            auto status = CreateAndFillRecordBatch(record, size, cols, list_len);
             if (!status.ok())
             {
                 std::cerr << status.ToString() << std::endl;
