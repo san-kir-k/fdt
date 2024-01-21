@@ -62,6 +62,36 @@ private:
             return ListBuffer::Slice<ValueType>(structBuf + offset, *bufferPtr);
         }
 
+        template <typename DataType,
+                  typename CType = typename arrow::TypeTraits<DataType>::CType,
+                  arrow::enable_if_number<DataType, bool> = true>
+        const CType& Value(size_t idx) const
+        {
+            auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
+            auto offset = m_parent.m_offsets[idx];
+            return *(reinterpret_cast<CType*>(structBuf + offset));
+        }
+
+        template <typename DataType,
+                  std::enable_if_t<std::is_same_v<DataType, arrow::StringArray>, bool> = true>
+        StringBuffer::String Value(size_t idx) const
+        {
+            auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
+            auto offset = m_parent.m_offsets[idx];
+            auto* bufferPtr = dynamic_cast<StringBuffer*>(m_parent.m_extBuffers[idx].get());
+            return StringBuffer::String(structBuf + offset, *bufferPtr);
+        }
+
+        template <typename DataType, typename ValueType,
+                  std::enable_if_t<std::is_same_v<DataType, arrow::ListArray>, bool> = true>
+        ListBuffer::Slice<ValueType> Value(size_t idx) const
+        {
+            auto structBuf = m_parent.m_buffer.get() + m_pos * m_parent.m_offsets.back();
+            auto offset = m_parent.m_offsets[idx];
+            auto* bufferPtr = dynamic_cast<ListBuffer*>(m_parent.m_extBuffers[idx].get());
+            return ListBuffer::Slice<ValueType>(structBuf + offset, *bufferPtr);
+        }
+
     private:
         uint64_t    m_pos;
         const AoS&  m_parent;

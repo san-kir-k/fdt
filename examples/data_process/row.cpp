@@ -19,72 +19,83 @@
 
 arrow::Status ProcessDataPureAoS(const AoS& aos)
 {
-    auto process = [&aos] () {
-        [[maybe_unused]] double sum = 0.0;
-        for (uint64_t i = 0; i < aos.GetLength(); i++)
+    double ans = 0;
+    auto process = [&aos, &ans] () {
+        double sum = 0.0;
+        for (uint64_t i = 0; i < aos.GetLength(); i+=100)
         {
-            for (const auto& f: aos.GetFields())
+            auto s = aos[i];
+            for (int j = 0; j < 4; ++j)
             {
-                auto s = aos[i];
-                sum += s.Value<arrow::DoubleType>(f->name());
+                sum += s.Value<arrow::DoubleType>(j);
             }
         }
+        ans = sum;
     };
     BENCHMARK_VOID_TIME("Pure AoS: ", process);
+    std::cout << "Answer is: " << ans << "\n";
     return arrow::Status::OK();
 }
 
 arrow::Status ProcessDataPureSoA(const std::shared_ptr<arrow::RecordBatch>& soa)
 {
-    auto process = [&soa] () {
-        [[maybe_unused]] double sum = 0.0;
-        for (int64_t i = 0; i < soa->num_rows(); i++)
+    double ans = 0;
+    auto process = [&soa, &ans] () {
+        double sum = 0.0;
+        for (int j = 0; j < 4; ++j)
         {
-            for (int j = 0; j < 4; ++j)
+            auto col = std::dynamic_pointer_cast<arrow::DoubleArray>(soa->column(j));
+            for (int64_t i = 0; i < soa->num_rows(); i+=100)
             {
-                auto col = std::dynamic_pointer_cast<arrow::DoubleArray>(soa->column(j));
                 sum += col->Value(i);
             }
         }
+        ans = sum;
     };
     BENCHMARK_VOID_TIME("Pure SoA: ", process);
+    std::cout << "Answer is: " << ans << "\n";
     return arrow::Status::OK();
 }
 
 arrow::Status ProcessDataSoAConvertedToAoS(const std::shared_ptr<arrow::RecordBatch>& soa)
 {
-    auto process = [&soa] () {
+    double ans = 0;
+    auto process = [&soa, &ans] () {
         auto paos = SoA2AoS(soa);
         const auto& aos = *paos;
-        [[maybe_unused]] double sum = 0.0;
-        for (uint64_t i = 0; i < aos.GetLength(); i++)
+        double sum = 0.0;
+        for (uint64_t i = 0; i < aos.GetLength(); i+=100)
         {
-            for (const auto& f: aos.GetFields())
+            auto s = aos[i];
+            for (int j = 0; j < 4; ++j)
             {
-                auto s = aos[i];
-                sum += s.Value<arrow::DoubleType>(f->name());
+                sum += s.Value<arrow::DoubleType>(j);
             }
         }
+        ans = sum;
     };
     BENCHMARK_VOID_TIME("SoA converted to AoS: ", process);
+    std::cout << "Answer is: " << ans << "\n";
     return arrow::Status::OK();
 }
 
 // ------------------------------------------------------------------------
 
-arrow::Status FillArays(uint64_t size, std::vector<std::shared_ptr<arrow::Array>>& arrays)
+arrow::Status FillArays(uint64_t size, std::vector<std::shared_ptr<arrow::Array>>& arrays, arrow::FieldVector& fields)
 {
     arrow::NumericBuilder<arrow::DoubleType> double_builder;
     ARROW_RETURN_NOT_OK(double_builder.Resize(size));
 
-    arrays.resize(4);
-    for (int i = 0; i < 4; ++i)
+    uint8_t cols = 4;
+    arrays.resize(cols);
+    for (int i = 0; i < cols; ++i)
     {
         std::vector<double> values(size);
         for (auto& v: values)
         {
-            v = static_cast<double>(std::rand() % 100);
+            v = static_cast<double>(std::rand() % 5);
         }
+        fields.push_back(arrow::field(std::format("f_{}", i), arrow::float64()));
         ARROW_RETURN_NOT_OK(double_builder.AppendValues(values));
         ARROW_RETURN_NOT_OK(double_builder.Finish(&arrays[i]));
         double_builder.Reset();
@@ -98,20 +109,15 @@ arrow::Status FillArays(uint64_t size, std::vector<std::shared_ptr<arrow::Array>
 arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size)
 {
     std::vector<std::shared_ptr<arrow::Array>> arrays;
+    arrow::FieldVector fields;
 
-    if (auto status = FillArays(size, arrays); !status.ok())
+    if (auto status = FillArays(size, arrays, fields); !status.ok())
     {
         return status;
     }
 
     // Create a table for the output
-    auto schema = arrow::schema({
-        arrow::field("x", arrow::float64()),
-        arrow::field("y", arrow::float64()),
-        arrow::field("z", arrow::float64()),
-        arrow::field("w", arrow::float64())
-    });
-
+    auto schema = arrow::schema(fields);
     aos = AoS::Make(schema, arrays);
     return arrow::Status::OK();
 }
@@ -119,20 +125,15 @@ arrow::Status FillAoS(std::shared_ptr<AoS>& aos, uint64_t size)
 arrow::Status FillSoA(std::shared_ptr<arrow::RecordBatch>& soa, uint64_t size)
 {
     std::vector<std::shared_ptr<arrow::Array>> arrays;
+    arrow::FieldVector fields;
 
-    if (auto status = FillArays(size, arrays); !status.ok())
+    if (auto status = FillArays(size, arrays, fields); !status.ok())
     {
         return status;
     }
 
     // Create a table for the output
-    auto schema = arrow::schema({
-        arrow::field("x", arrow::float64()),
-        arrow::field("y", arrow::float64()),
-        arrow::field("z", arrow::float64()),
-        arrow::field("w", arrow::float64())
-    });
-
+    auto schema = arrow::schema(fields);
     soa = arrow::RecordBatch::Make(schema, size, arrays);
     return arrow::Status::OK();
 }
@@ -143,7 +144,7 @@ int main()
 {
     std::srand(std::time(nullptr));
 
-    constexpr uint64_t size = 1'000'000;
+    constexpr uint64_t size = 10'000'000;
 
     std::shared_ptr<AoS> aos;
     std::shared_ptr<arrow::RecordBatch> soa;
